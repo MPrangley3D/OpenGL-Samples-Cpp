@@ -34,3 +34,5 @@
 *.vcxproj
 OpenGLCourseApp/OpenGLCourseApp.vcxproj.filters
 OpenGLCourseApp/OpenGLCourseApp.vcxproj.user
+/OpenGLCourseApp/OpenGLCourseApp
+/OpenGLCourseApp/Debug
