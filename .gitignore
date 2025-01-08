@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+/OpenGLCourseApp/.vs
+*.vcxproj
+OpenGLCourseApp/OpenGLCourseApp.vcxproj.filters
+OpenGLCourseApp/OpenGLCourseApp.vcxproj.user
