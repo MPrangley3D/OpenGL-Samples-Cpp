@@ -13,6 +13,8 @@
 // Window dimensions
 const GLint WIDTH = 800;
 const GLint HEIGHT = 600;
+const float ToRadians = 3.14159265f / 180.0f;
+
 GLuint VAO;
 GLuint VBO;
 GLuint ShaderProgram;
@@ -22,6 +24,7 @@ bool Direction = true;
 float TriangleOffset = 0.0f;
 float TriangleMaxOffset = 0.7f;
 float TriangleIncrement = 0.00005f;
+float CurrentAngle = 0.0f;
 
 
 // Vertex Shader
@@ -219,6 +222,7 @@ int main()
         // Get + Handle User Input Events
         glfwPollEvents();
 
+        // Update Transform
         if (Direction)
         {
             TriangleOffset += TriangleIncrement;
@@ -233,6 +237,15 @@ int main()
             Direction = !Direction;
         }
 
+        // Update Rotation
+        CurrentAngle += 0.01f;
+
+        // Prevent overflow
+        if (CurrentAngle >= 360)
+        {
+            CurrentAngle -= 360;
+        }
+
         // Clear window
         glClearColor(0.0f,0.0f,0.0f,1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -243,9 +256,9 @@ int main()
         // Defines a 4x4 matrix for the Model Matrix (1.0f) initializes as a Identity Matrix
         glm::mat4 Model(1.0f);
 
-        // Apply offset to the X of the transform
-        Model = glm::translate(Model, glm::vec3(TriangleOffset, 0.0f, 0.0f));
-
+        // Update the Transform by the Model Matrix
+        Model = glm::rotate(Model, CurrentAngle * ToRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+        Model = glm::translate(Model, glm::vec3(TriangleOffset, TriangleOffset, 0.0f));
 
         // Bind the Uniform Model Matrix
         glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
