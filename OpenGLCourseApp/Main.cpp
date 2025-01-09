@@ -2,6 +2,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <string.h>
+#include <stdlib.h>
+#include <cmath>
 
 // Window dimensions
 const GLint WIDTH = 800;
@@ -9,16 +11,26 @@ const GLint HEIGHT = 600;
 GLuint VAO;
 GLuint VBO;
 GLuint ShaderProgram;
+GLuint UniformMoveX;
+
+bool Direction = true;
+float TriangleOffset = 0.0f;
+float TriangleMaxOffset = 0.7f;
+float TriangleIncrement = 0.00005f;
+
 
 // Vertex Shader
-static const char* VertexShader = "                                 \n\
-#version 330                                                        \n\
-                                                                    \n\
-layout (location = 0) in vec3 pos;                                  \n\
-                                                                    \n\
-void main()                                                         \n\
-{                                                                   \n\
-    gl_Position = vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);       \n\
+static const char* VertexShader = "                                     \n\
+#version 330                                                            \n\
+                                                                        \n\
+layout (location = 0) in vec3 pos;                                      \n\
+                                                                        \n\
+    uniform float MoveX;                                                \n\
+                                                                        \n\
+                                                                        \n\
+void main()                                                             \n\
+{                                                                       \n\
+    gl_Position = vec4(0.4 * pos.x + MoveX, 0.4 * pos.y, pos.z, 1.0);   \n\
 }";
 
 // Fragment Shader
@@ -127,6 +139,7 @@ void CompileShaders()
         return;
     }
 
+    // Validate Shader Program
     glValidateProgram(ShaderProgram);
     glGetProgramiv(ShaderProgram, GL_VALIDATE_STATUS, &Result);
     if (!Result)
@@ -135,6 +148,9 @@ void CompileShaders()
         printf("Error validating the Shader Program: '%s'\n", ErrorLog);
         return;
     }
+
+    // Get the location of the MoveX Variable from the sahder code in the specified Shader Program
+    UniformMoveX = glGetUniformLocation(ShaderProgram, "MoveX");
 
 }
 
@@ -198,12 +214,29 @@ int main()
         // Get + Handle User Input Events
         glfwPollEvents();
 
+        if (Direction)
+        {
+            TriangleOffset += TriangleIncrement;
+        }
+        else
+        {
+            TriangleOffset -= TriangleIncrement;
+        }
+
+        if (abs(TriangleOffset) >= TriangleMaxOffset)
+        {
+            Direction = !Direction;
+        }
+
         // Clear window
         glClearColor(0.0f,0.0f,0.0f,1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Assign the Shader Program
         glUseProgram(ShaderProgram);
+
+            // Bind the Uniform Variable
+        glUniform1f(UniformMoveX, TriangleOffset);
 
             // Bind the VAO
             glBindVertexArray(VAO);
