@@ -1,9 +1,14 @@
 #include <stdio.h>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 #include <string.h>
 #include <stdlib.h>
 #include <cmath>
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+#include <GLM/glm.hpp>
+#include <GLM/gtc/matrix_transform.hpp>
+#include <GLM/gtc/type_ptr.hpp>
 
 // Window dimensions
 const GLint WIDTH = 800;
@@ -11,7 +16,7 @@ const GLint HEIGHT = 600;
 GLuint VAO;
 GLuint VBO;
 GLuint ShaderProgram;
-GLuint UniformMoveX;
+GLuint UniformModel;
 
 bool Direction = true;
 float TriangleOffset = 0.0f;
@@ -25,12 +30,12 @@ static const char* VertexShader = "                                     \n\
                                                                         \n\
 layout (location = 0) in vec3 pos;                                      \n\
                                                                         \n\
-    uniform float MoveX;                                                \n\
+    uniform mat4 Model;                                                 \n\
                                                                         \n\
                                                                         \n\
 void main()                                                             \n\
 {                                                                       \n\
-    gl_Position = vec4(0.4 * pos.x + MoveX, 0.4 * pos.y, pos.z, 1.0);   \n\
+    gl_Position = Model * vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);   \n\
 }";
 
 // Fragment Shader
@@ -150,7 +155,7 @@ void CompileShaders()
     }
 
     // Get the location of the MoveX Variable from the sahder code in the specified Shader Program
-    UniformMoveX = glGetUniformLocation(ShaderProgram, "MoveX");
+    UniformModel = glGetUniformLocation(ShaderProgram, "Model");
 
 }
 
@@ -235,8 +240,15 @@ int main()
         // Assign the Shader Program
         glUseProgram(ShaderProgram);
 
-            // Bind the Uniform Variable
-        glUniform1f(UniformMoveX, TriangleOffset);
+        // Defines a 4x4 matrix for the Model Matrix (1.0f) initializes as a Identity Matrix
+        glm::mat4 Model(1.0f);
+
+        // Apply offset to the X of the transform
+        Model = glm::translate(Model, glm::vec3(TriangleOffset, 0.0f, 0.0f));
+
+
+        // Bind the Uniform Model Matrix
+        glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
 
             // Bind the VAO
             glBindVertexArray(VAO);
