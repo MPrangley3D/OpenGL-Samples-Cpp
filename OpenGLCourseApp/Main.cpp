@@ -21,10 +21,15 @@ GLuint ShaderProgram;
 GLuint UniformModel;
 
 bool Direction = true;
+bool Growing = true;
 float TriangleOffset = 0.0f;
 float TriangleMaxOffset = 0.7f;
 float TriangleIncrement = 0.00005f;
 float CurrentAngle = 0.0f;
+float CurrentScale = 0.4f;
+float MaxScale = 0.9f;
+float MinScale = 0.1f;
+float ScaleIncrement = 0.0001f;
 
 
 // Vertex Shader
@@ -38,7 +43,7 @@ layout (location = 0) in vec3 pos;                                      \n\
                                                                         \n\
 void main()                                                             \n\
 {                                                                       \n\
-    gl_Position = Model * vec4(0.4 * pos.x, 0.4 * pos.y, pos.z, 1.0);   \n\
+    gl_Position = Model * vec4(pos,1.0);                                \n\
 }";
 
 // Fragment Shader
@@ -246,6 +251,26 @@ int main()
             CurrentAngle -= 360;
         }
 
+        // Update Scale
+        if (Growing)
+        {
+            CurrentScale += ScaleIncrement;
+        }
+        else
+        {
+            CurrentScale -= ScaleIncrement;
+        }
+
+        if (CurrentScale >= MaxScale)
+        {
+            Growing = false;
+        }
+        
+        if (CurrentScale <= MinScale)
+        {
+            Growing = true;
+        }
+
         // Clear window
         glClearColor(0.0f,0.0f,0.0f,1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -257,8 +282,10 @@ int main()
         glm::mat4 Model(1.0f);
 
         // Update the Transform by the Model Matrix
-        Model = glm::rotate(Model, CurrentAngle * ToRadians, glm::vec3(0.0f, 0.0f, 1.0f));
-        Model = glm::translate(Model, glm::vec3(TriangleOffset, TriangleOffset, 0.0f));
+        // Note these are applied in reserve order to the object
+        //Model = glm::translate(Model, glm::vec3(TriangleOffset, TriangleOffset, 0.0f));
+        //Model = glm::rotate(Model, CurrentAngle * ToRadians, glm::vec3(0.0f, 0.0f, 1.0f));    
+        Model = glm::scale(Model, glm::vec3(0.4f, 0.4f, 1.0f));
 
         // Bind the Uniform Model Matrix
         glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
