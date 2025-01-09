@@ -33,28 +33,57 @@ float ScaleIncrement = 0.0001f;
 
 
 // Vertex Shader
+/*
+Version must match our Major and Minor versions as set in GLFW_CONTEXT_VERSION_MAJOR/MINOR
+in == input, out == output
+layout: This keyword indicates that the following directive is related to the layout of the shader.
+location: This directive specifies the location of a vertex attribute.
+'= 0': This assigns the location value to be 0.
+
+By using layout (location = 0), we're telling OpenGL that the pos vertex attribute should be read from the 
+first (0-indexed) vertex attribute slot when passing data from your application to the shader.
+
+It maps the pos attribute to the first vertex attribute array, which is usually the position attribute. 
+This allows OpenGL to correctly bind the vertex data to the corresponding attribute in the shader.
+*/
+
+/*
+* In OpenGL, the standard convention for vertex attributes is as follows:
+Location 0: Position attribute (pos, position, etc.)
+Location 1: Color attribute (color, vertexColor, etc.)
+Location 2: Texture coordinates attribute (texCoord, uv, etc.)
+Location 3: Normal attribute (normal, vertexNormal, etc.)
+4-7 | Additional texture coordinates or other custom attributes
+*/
+
 static const char* VertexShader = "                                     \n\
 #version 330                                                            \n\
                                                                         \n\
 layout (location = 0) in vec3 pos;                                      \n\
                                                                         \n\
-    uniform mat4 Model;                                                 \n\
+out vec4 VertexColor;                                                   \n\
+                                                                        \n\
+                                                                        \n\
+uniform mat4 Model;                                                     \n\
                                                                         \n\
                                                                         \n\
 void main()                                                             \n\
 {                                                                       \n\
     gl_Position = Model * vec4(pos,1.0);                                \n\
+    VertexColor = vec4(clamp(pos, 0.0f, 1.0f),1.0f);                    \n\
 }";
 
 // Fragment Shader
 static const char* FragmentShader = "                               \n\
 #version 330                                                        \n\
                                                                     \n\
+in vec4 VertexColor;                                                \n\
+                                                                    \n\
 out vec4 color;                                                     \n\
                                                                     \n\
 void main()                                                         \n\
 {                                                                   \n\
-    color = vec4(0.0, 1.0, 0.0, 1.0);                               \n\
+    color = VertexColor;                                            \n\
 }";
 
 void CreateTriangle()
@@ -283,8 +312,8 @@ int main()
 
         // Update the Transform by the Model Matrix
         // Note these are applied in reserve order to the object
-        //Model = glm::translate(Model, glm::vec3(TriangleOffset, TriangleOffset, 0.0f));
-        //Model = glm::rotate(Model, CurrentAngle * ToRadians, glm::vec3(0.0f, 0.0f, 1.0f));    
+        Model = glm::translate(Model, glm::vec3(TriangleOffset, TriangleOffset, 0.0f));
+        Model = glm::rotate(Model, CurrentAngle * ToRadians, glm::vec3(0.0f, 0.0f, 1.0f));    
         Model = glm::scale(Model, glm::vec3(0.4f, 0.4f, 1.0f));
 
         // Bind the Uniform Model Matrix
