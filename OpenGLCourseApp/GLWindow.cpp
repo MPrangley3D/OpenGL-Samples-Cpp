@@ -156,7 +156,7 @@ void GLWindow::HandleMouse(GLFWwindow* Window, double PosX, double PosY)
     TheWindow->LastX = PosX;
     TheWindow->LastY = PosY;
 
-    printf("X:%.2f, Y:%.2f\n",TheWindow->ChangeX, TheWindow->ChangeY);
+    //printf("X:%.2f, Y:%.2f\n",TheWindow->ChangeX, TheWindow->ChangeY);
 }
 
 void GLWindow::CreateCallbacks()

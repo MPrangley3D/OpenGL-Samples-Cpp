@@ -14,10 +14,15 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "GLWindow.h"
+#include "Camera.h"
 
 GLWindow MainWindow;
 std::vector<Mesh*> Meshes;
 std::vector<Shader> Shaders;
+Camera MyCamera;
+
+GLfloat DeltaTime = 0.0f;
+GLfloat LastTime = 0.0f;
 
 // Vertex Shader
 /*
@@ -89,6 +94,7 @@ int main()
 
     CreateObjects();
     CreateShaders();
+    MyCamera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 1.0f, 0.1f);
 
     GLuint UniformProjection = 0;
     GLuint UniformView = 0;
@@ -100,8 +106,17 @@ int main()
     // Loop until window closed
     while (!MainWindow.GetShouldCloseWindow())
     {
+        // Get frame time in seconds
+        GLfloat Now = glfwGetTime(); // SDL_GetPerformanceCounter() for SDL (Must be converted to seconds for SDL)
+        DeltaTime = Now - LastTime;  // (Now - LastTime) * 1000 / SDL_GetPerformanceFrequency();
+        LastTime = Now;
+
         // Get + Handle User Input Events
         glfwPollEvents();
+
+        // Pass key inputs from Window to the Camera
+        MyCamera.KeyControl(MainWindow.GetKeys(), DeltaTime);
+        MyCamera.MouseControl(MainWindow.GetChangeX(), MainWindow.GetChangeY());
 
         // Clear window
         glClearColor(0.0f,0.0f,0.0f,1.0f);
@@ -113,6 +128,7 @@ int main()
         Shaders[0].UseShader();
         UniformModel = Shaders[0].GetModelLocation();
         UniformProjection = Shaders[0].GetProjectionLocation();
+        UniformView = Shaders[0].GetViewLocation();
 
         // Defines a 4x4 matrix for the Model Matrix (1.0f) initializes as a Identity Matrix
         glm::mat4 Model(1.0f);
@@ -129,15 +145,20 @@ int main()
         // Bind the Uniform Perspective / Projection Matrix
         glUniformMatrix4fv(UniformProjection, 1, GL_FALSE, glm::value_ptr(Projection));
 
-        //Render the mesh
+        // Bind the Camera / View Matrix
+        glUniformMatrix4fv(UniformView, 1, GL_FALSE, glm::value_ptr(MyCamera.CalculateViewMatrix()));
+
+        // Render mesh 0
         Meshes[0]->RenderMesh();
 
+        // Refresh & create new Model info for 2nd Mesh, View & Projection is re-used
         Model = glm::mat4(1.0f);
         Model = glm::translate(Model, glm::vec3(1.0f, 0.0f, -2.5f));
         Model = glm::rotate(Model, 0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
         Model = glm::scale(Model, glm::vec3(0.25f, 0.25f, 0.25f));
         glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
 
+        // Render mesh 1
         Meshes[1]->RenderMesh();
 
         // Clear the Shader Program
