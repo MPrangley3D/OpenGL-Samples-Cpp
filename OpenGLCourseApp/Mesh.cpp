@@ -41,10 +41,14 @@ void Mesh::CreateMesh(GLfloat* Verticies, unsigned int* Indicies, unsigned int N
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     // 5. Attach vertex data to the bound VBO
     glBufferData(GL_ARRAY_BUFFER, sizeof(Verticies) * NumOfVerticies, Verticies, GL_STATIC_DRAW);
-    // 6. Define Attribute Pointer
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    // 7. Enable the Attribute Pointer
+    // 6a. Define Attribute Pointer Targeting slot 0 for the MESH geometry
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Verticies[0]) * 5, 0);
+    // 7a. Enable the Attribute Pointer
     glEnableVertexAttribArray(0);
+    // 6b. Define Attribute Pointer Targetong slot 1 for the TEXTURES
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Verticies[0]) * 5, (void*)(sizeof(Verticies[0]) * 3));
+    // 7b. Enable the Attribute Pointer
+    glEnableVertexAttribArray(1);
     // 8. Unbind the VAO, VBO, and IBO
     // IMPORTANT:  VAO should be unbound FIRST, then IBO
     glBindBuffer(GL_ARRAY_BUFFER, 0);

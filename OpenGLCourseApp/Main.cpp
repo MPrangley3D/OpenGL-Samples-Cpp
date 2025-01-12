@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -15,11 +17,16 @@
 #include "Shader.h"
 #include "GLWindow.h"
 #include "Camera.h"
+#include "Texture.h"
 
 GLWindow MainWindow;
 std::vector<Mesh*> Meshes;
 std::vector<Shader> Shaders;
 Camera MyCamera;
+
+Texture BrickTexture;
+Texture DirtTexture;
+
 
 GLfloat DeltaTime = 0.0f;
 GLfloat LastTime = 0.0f;
@@ -64,19 +71,19 @@ void CreateObjects()
     };
 
     GLfloat GeometryVerticies[] = 
-    {
-          0.0f,  0.0f, 1.0f, //0
-         -1.0f, -1.0f, 0.0f, //1
-          1.0f, -1.0f, 0.0f, //2
-          0.0f,  1.0f, 0.0f  //3
+    {//   X      Y     Z     U      V
+         -1.0f, -1.0f, 0.0f, 0.0f,  0.0f, //0
+          0.0f, -1.0f, 1.0f, 0.5f,  0.0f, //1
+          1.0f, -1.0f, 0.0f, 1.0f,  0.0f, //2
+          0.0f,  1.0f, 0.0f, 0.5f,  1.0f, //3
     };
 
     Mesh* Object1 = new Mesh();
-    Object1->CreateMesh(GeometryVerticies, Indicies, 12, 12);
+    Object1->CreateMesh(GeometryVerticies, Indicies, 20, 12);
     Meshes.push_back(Object1);
 
     Mesh* Object2 = new Mesh();
-    Object2->CreateMesh(GeometryVerticies, Indicies, 12, 12);
+    Object2->CreateMesh(GeometryVerticies, Indicies, 20, 12);
     Meshes.push_back(Object2);
 }
 
@@ -95,6 +102,11 @@ int main()
     CreateObjects();
     CreateShaders();
     MyCamera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 1.0f, 0.1f);
+
+    BrickTexture = Texture("Textures/brick.png");
+    BrickTexture.LoadTexture();
+    DirtTexture = Texture("Textures/dirt.png");
+    DirtTexture.LoadTexture();
 
     GLuint UniformProjection = 0;
     GLuint UniformView = 0;
@@ -148,6 +160,9 @@ int main()
         // Bind the Camera / View Matrix
         glUniformMatrix4fv(UniformView, 1, GL_FALSE, glm::value_ptr(MyCamera.CalculateViewMatrix()));
 
+        // Use Brick Texture
+        BrickTexture.UseTexture();
+
         // Render mesh 0
         Meshes[0]->RenderMesh();
 
@@ -155,8 +170,12 @@ int main()
         Model = glm::mat4(1.0f);
         Model = glm::translate(Model, glm::vec3(1.0f, 0.0f, -2.5f));
         Model = glm::rotate(Model, 0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+        Model = glm::rotate(Model, 0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
         Model = glm::scale(Model, glm::vec3(0.25f, 0.25f, 0.25f));
         glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
+
+        // Use Dirt Texture
+        DirtTexture.UseTexture();
 
         // Render mesh 1
         Meshes[1]->RenderMesh();
