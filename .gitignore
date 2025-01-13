@@ -35,3 +35,6 @@ OpenGLCourseApp/OpenGLCourseApp.vcxproj.filters
 OpenGLCourseApp/OpenGLCourseApp.vcxproj.user
 /OpenGLCourseApp/OpenGLCourseApp
 /OpenGLCourseApp/Debug
+
+# whitelist everything in ./ExternalLibs
+!ExternalLibs/**
