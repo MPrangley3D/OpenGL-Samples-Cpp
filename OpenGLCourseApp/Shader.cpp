@@ -111,7 +111,7 @@ void Shader::CompileShader(const char* VertexCode, const char* FragmentCode)
 
     // Logging errors for the shader
     GLint Result = 0;
-    GLchar ErrorLog[1024];
+    GLchar ErrorLog[1024] = { 0 };
 
     // Link the shader program
     glLinkProgram(ShaderID);
