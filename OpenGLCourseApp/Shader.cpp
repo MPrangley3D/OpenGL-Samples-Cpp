@@ -6,6 +6,10 @@ Shader::Shader()
     UniformModel = 0;
     UniformView = 0;
     UniformProjection = 0;
+    UniformAmbientIntensity = 0;
+    UniformAmbientColor = 0;
+    UniformDiffuseIntensity = 0;
+    UniformLightDirection = 0;
 }
 
 void Shader::CreateFromString(const char* VertexCode, const char* FragmentCode)
@@ -45,6 +49,7 @@ std::string Shader::ReadFile(const char* FilePath)
     return Content;
 }
 
+// Uniform Getters
 GLuint Shader::GetProjectionLocation()
 {
     return UniformProjection;
@@ -60,24 +65,53 @@ GLuint Shader::GetModelLocation()
     return UniformModel;
 }
 
+GLuint Shader::GetAmbientColorLocation()
+{
+    return UniformAmbientColor;
+}
+
+GLuint Shader::GetAmbientIntensityLocation()
+{
+    return UniformAmbientIntensity;
+}
+
+GLuint Shader::GetLightDirectionLocation()
+{
+    return UniformLightDirection;
+}
+
+GLuint Shader::GetDiffuseIntensityLocation()
+{
+    return UniformDiffuseIntensity;
+}
+
 void Shader::CompileShader(const char* VertexCode, const char* FragmentCode)
 {
     // Create the empty Shader Program
     ShaderID = glCreateProgram();
+
+    printf("OpenGL version is (%s)\n", glGetString(GL_VERSION));
 
     if (!ShaderID)
     {
         printf("Error creating the Shader Program!");
         return;
     }
+    else
+    {
+        printf("Clean shader program created\n");
+    }
 
     // Add shaders to the program
+    printf("Add Vertex Shader...\n");
     AddShader(ShaderID, VertexCode, GL_VERTEX_SHADER);
+
+    printf("Add Fragment Shader...\n");
     AddShader(ShaderID, FragmentCode, GL_FRAGMENT_SHADER);
 
     // Logging errors for the shader
     GLint Result = 0;
-    GLchar ErrorLog[1024] = { 0 };
+    GLchar ErrorLog[1024];
 
     // Link the shader program
     glLinkProgram(ShaderID);
@@ -87,6 +121,10 @@ void Shader::CompileShader(const char* VertexCode, const char* FragmentCode)
         glGetProgramInfoLog(ShaderID, sizeof(ErrorLog), NULL, ErrorLog);
         printf("Error linking the Shader Program: '%s'\n", ErrorLog);
         return;
+    }
+    else
+    {
+        printf("Linking Successful!\n");
     }
 
     // Validate Shader Program
@@ -98,11 +136,20 @@ void Shader::CompileShader(const char* VertexCode, const char* FragmentCode)
         printf("Error validating the Shader Program: '%s'\n", ErrorLog);
         return;
     }
+    else
+    {
+        printf("Validation succeeded!\n");
+    }
 
     // Bind uniform variables to the location of the model in the shader code
+    // Note the struct member variable access for the light variables
     UniformModel = glGetUniformLocation(ShaderID, "Model");
     UniformView = glGetUniformLocation(ShaderID, "View");
     UniformProjection = glGetUniformLocation(ShaderID, "Projection");
+    UniformAmbientIntensity = glGetUniformLocation(ShaderID, "MyDirectionalLight.AmbientIntensity");
+    UniformAmbientColor = glGetUniformLocation(ShaderID, "MyDirectionalLight.Color");
+    UniformLightDirection = glGetUniformLocation(ShaderID, "MyDirectionalLight.Direction");
+    UniformDiffuseIntensity = glGetUniformLocation(ShaderID, "MyDirectionalLight.DiffuseIntensity");
 }
 
 void Shader::UseShader()
@@ -121,6 +168,10 @@ void Shader::ClearShader()
     UniformModel = 0;
     UniformProjection = 0;
     UniformView = 0;
+    UniformAmbientIntensity = 0;
+    UniformAmbientColor = 0;
+    UniformDiffuseIntensity = 0;
+    UniformLightDirection = 0;
 }
 
 void Shader::AddShader(GLuint TheProgram, const char* ShaderCode, GLenum ShaderType)
@@ -152,6 +203,10 @@ void Shader::AddShader(GLuint TheProgram, const char* ShaderCode, GLenum ShaderT
         glGetProgramInfoLog(ShaderID, sizeof(ErrorLog), NULL, ErrorLog);
         printf("Error compiling the %d Shader Program: '%s'\n", ShaderType, ErrorLog);
         return;
+    }
+    else
+    {
+        printf("%d: Compile Suceeded\n", ShaderType);
     }
 
     // Attach shader to the shader program

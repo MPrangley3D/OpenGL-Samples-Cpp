@@ -18,11 +18,13 @@
 #include "GLWindow.h"
 #include "Camera.h"
 #include "Texture.h"
+#include "Light.h"
 
 GLWindow MainWindow;
 std::vector<Mesh*> Meshes;
 std::vector<Shader> Shaders;
 Camera MyCamera;
+Light AmbientLight;
 
 Texture BrickTexture;
 Texture DirtTexture;
@@ -59,6 +61,52 @@ Location 3: Normal attribute (normal, vertexNormal, etc.)
 static const char* VertexShader = "Shaders/shader.vert";
 static const char* FragmentShader = "Shaders/shader.frag";
 
+void CalculateAverageNormals(unsigned int* Indicies, unsigned int IndicieCount, 
+                                GLfloat* Verticies, unsigned int VerticieCount, 
+                                unsigned int VertexLength, unsigned int NormalOffset)
+{
+    for (size_t i = 0; i < IndicieCount; i += 3)
+    {
+        // Accesses the float data of the vertex for the given indicie
+        unsigned int in0 = Indicies[i] * VertexLength;
+        unsigned int in1 = Indicies[i + 1] * VertexLength;
+        unsigned int in2 = Indicies[i + 2] * VertexLength;
+
+        // Calculate the unitized Normal
+        glm::vec3 v1(Verticies[in1] - Verticies[in0], Verticies[in1 + 1] - Verticies[in0 + 1], Verticies[in1 + 2] - Verticies[in0 + 2]);
+        glm::vec3 v2(Verticies[in2] - Verticies[in0], Verticies[in2 + 1] - Verticies[in0 + 1], Verticies[in2 + 2] - Verticies[in0 + 2]);
+        glm::vec3 Normal = glm::cross(v1, v2);
+        Normal = glm::normalize(Normal);
+
+        // Shift index registers over to their respective normal vertex indicies  (NX, NY, NZ in GeometryVerticies below) 
+        in0 += NormalOffset;
+        in1 += NormalOffset;
+        in2 += NormalOffset;
+
+        // Store calculated normals in the GeometryVerticies data set below
+        Verticies[in0] += Normal.x; 
+        Verticies[in0 + 1] += Normal.y; 
+        Verticies[in0 + 2] += Normal.z;
+        Verticies[in1] += Normal.x; 
+        Verticies[in1 + 1] += Normal.y; 
+        Verticies[in1 + 2] += Normal.z;
+        Verticies[in2] += Normal.x; 
+        Verticies[in2 + 1] += Normal.y; 
+        Verticies[in2 + 2] += Normal.z;
+    }
+
+    // Iterate over and normalize the normal vectors
+    for (size_t i = 0; i < VerticieCount / VertexLength; i++)
+    {
+        unsigned int OffsetN = i * VertexLength + NormalOffset;
+        glm::vec3 vec(Verticies[OffsetN], Verticies[OffsetN + 1], Verticies[OffsetN + 2]);
+        vec = glm::normalize(vec);
+        Verticies[OffsetN] = vec.x;
+        Verticies[OffsetN + 1] = vec.y;
+        Verticies[OffsetN + 2] = vec.z;
+    }
+}
+
 void CreateObjects()
 {
     //Specify the point sets that make our pyramid
@@ -71,19 +119,21 @@ void CreateObjects()
     };
 
     GLfloat GeometryVerticies[] = 
-    {//   X      Y     Z     U      V
-         -1.0f, -1.0f, 0.0f, 0.0f,  0.0f, //0
-          0.0f, -1.0f, 1.0f, 0.5f,  0.0f, //1
-          1.0f, -1.0f, 0.0f, 1.0f,  0.0f, //2
-          0.0f,  1.0f, 0.0f, 0.5f,  1.0f, //3
+    {//   X      Y     Z       U      V         NX    NY    NZ
+         -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,      0.0f, 0.0f, 0.0f,       //0
+          0.0f, -1.0f, 1.0f,   0.5f, 0.0f,      0.0f, 0.0f, 0.0f,       //1
+          1.0f, -1.0f, 0.0f,   1.0f, 0.0f,      0.0f, 0.0f, 0.0f,       //2
+          0.0f,  1.0f, 0.0f,   0.5f, 1.0f,      0.0f, 0.0f, 0.0f        //3
     };
 
+    CalculateAverageNormals(Indicies, 12, GeometryVerticies, 32, 8, 5);
+
     Mesh* Object1 = new Mesh();
-    Object1->CreateMesh(GeometryVerticies, Indicies, 20, 12);
+    Object1->CreateMesh(GeometryVerticies, Indicies, 32, 12);
     Meshes.push_back(Object1);
 
     Mesh* Object2 = new Mesh();
-    Object2->CreateMesh(GeometryVerticies, Indicies, 20, 12);
+    Object2->CreateMesh(GeometryVerticies, Indicies, 32, 12);
     Meshes.push_back(Object2);
 }
 
@@ -108,9 +158,17 @@ int main()
     DirtTexture = Texture("Textures/dirt.png");
     DirtTexture.LoadTexture();
 
+    AmbientLight = Light(1.0f,  1.0f,  1.0f, 0.2f, 
+                         2.0f, -1.0f, -2.0f, 1.0f);
+
+    // Default values for Uniform IDs, updates in While loop per-shader.
     GLuint UniformProjection = 0;
     GLuint UniformView = 0;
     GLuint UniformModel = 0;
+    GLuint UniformAmbientColor = 0;
+    GLuint UniformAmbientIntensity = 0;
+    GLuint UniformDiffuseIntensity = 0;
+    GLuint UniformLightDirection = 0;
 
     // We only need to set up Projection once, so we do it here rather than in the While loop
     glm::mat4 Projection = glm::perspective(45.0f, MainWindow.GetBufferWidth() / MainWindow.GetBufferHeight(), 0.1f, 100.0f);
@@ -138,9 +196,17 @@ int main()
 
         // Assign the Shader Program
         Shaders[0].UseShader();
+
+        // Set uniform IDs based on shader IDs
         UniformModel = Shaders[0].GetModelLocation();
         UniformProjection = Shaders[0].GetProjectionLocation();
         UniformView = Shaders[0].GetViewLocation();
+        UniformAmbientColor = Shaders[0].GetAmbientColorLocation();
+        UniformAmbientIntensity = Shaders[0].GetAmbientIntensityLocation();
+        UniformDiffuseIntensity = Shaders[0].GetDiffuseIntensityLocation();
+        UniformLightDirection = Shaders[0].GetLightDirectionLocation();
+
+        AmbientLight.UseLight(UniformAmbientIntensity, UniformAmbientColor, UniformDiffuseIntensity, UniformLightDirection);
 
         // Defines a 4x4 matrix for the Model Matrix (1.0f) initializes as a Identity Matrix
         glm::mat4 Model(1.0f);
@@ -150,7 +216,7 @@ int main()
         Model = glm::translate(Model, glm::vec3(-1.0f, 0.0f, -2.5f));
         Model = glm::rotate(Model, 0.0f, glm::vec3(0.5f, 0.5f, 0.5f)); 
         Model = glm::scale(Model, glm::vec3(0.25f, 0.25f, 0.25f));
-
+        
         // Bind the Uniform Model Matrix
         glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
 
