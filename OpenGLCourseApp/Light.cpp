@@ -19,8 +19,8 @@ Light::Light(GLfloat Red, GLfloat Green, GLfloat Blue, GLfloat Intensity,
 }
 
 // These uniforms pass the values into the bound ID in the shader
-void Light::UseLight(GLfloat AmbientIntensityLocation, GLfloat AmbientColorLocation,
-	GLfloat DiffuseIntensityLocation, GLfloat DirectionLocation)
+void Light::UseLight(GLuint AmbientIntensityLocation, GLuint AmbientColorLocation,
+						GLuint DiffuseIntensityLocation, GLuint DirectionLocation)
 {
 	glUniform3f(AmbientColorLocation, Color.x, Color.y, Color.z);
 	glUniform1f(AmbientIntensityLocation, AmbientIntensity);

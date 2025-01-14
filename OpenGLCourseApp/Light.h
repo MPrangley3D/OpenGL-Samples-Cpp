@@ -11,8 +11,8 @@ public:
 		GLfloat DirX, GLfloat DirY, GLfloat DirZ, GLfloat NewDiffuseIntensity);
 
 	// Bind light values for use in the shader (Location here meaning the ID in the shader, not a position)
-	void UseLight(GLfloat AmbientIntensityLocation, GLfloat AmbientColorLocation, 
-					GLfloat DiffuseIntensityLocation, GLfloat DirectionLocation);
+	void UseLight(GLuint AmbientIntensityLocation, GLuint AmbientColorLocation,
+					GLuint DiffuseIntensityLocation, GLuint DirectionLocation);
 
 	~Light();
 
