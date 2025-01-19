@@ -34,6 +34,7 @@ PointLight PointLights[MAX_POINT_LIGHTS];
 
 Texture BrickTexture;
 Texture DirtTexture;
+Texture PlainTexture;
 
 Material ShinyMaterial;
 Material DullMaterial;
@@ -86,12 +87,12 @@ void CalculateAverageNormals(unsigned int* Indicies, unsigned int IndicieCount,
         glm::vec3 Normal = glm::cross(v1, v2);
         Normal = glm::normalize(Normal);
 
-        // Shift index registers over to their respective normal vertex indicies  (NX, NY, NZ in GeometryVerticies below) 
+        // Shift index registers over to their respective normal vertex indicies  (NX, NY, NZ in GeometryVertices below) 
         in0 += NormalOffset;
         in1 += NormalOffset;
         in2 += NormalOffset;
 
-        // Store calculated normals in the GeometryVerticies data set below
+        // Store calculated normals in the GeometryVertices data set below
         Verticies[in0] += Normal.x; 
         Verticies[in0 + 1] += Normal.y; 
         Verticies[in0 + 2] += Normal.z;
@@ -126,7 +127,7 @@ void CreateObjects()
         0,1,2
     };
 
-    GLfloat GeometryVerticies[] = 
+    GLfloat GeometryVertices[] = 
     {//   X      Y     Z       U      V         NX    NY    NZ
          -1.0f, -1.0f, -0.6f,   0.0f, 0.0f,      0.0f, 0.0f, 0.0f,       //0
           0.0f, -1.0f,  1.0f,   0.5f, 0.0f,      0.0f, 0.0f, 0.0f,       //1
@@ -134,15 +135,35 @@ void CreateObjects()
           0.0f,  1.0f,  0.0f,   0.5f, 1.0f,      0.0f, 0.0f, 0.0f        //3
     };
 
-    CalculateAverageNormals(Indicies, 12, GeometryVerticies, 32, 8, 5);
+
+    //Specify the point sets that make our Floor
+    unsigned int FloorIndicies[] =
+    {
+        0,2,1,
+        1,2,3
+    };
+
+    GLfloat FloorVertices[] =
+    {
+        -10.0f, 0.0f, -10.0f,   0.0f, 0.0f,     0.0f, -1.0f, 0.0f,  //0
+         10.0f, 0.0f, -10.0f,  10.0f, 0.0f,     0.0f, -1.0f, 0.0f,  //1
+        -10.0f, 0.0f,  10.0f,   0.0f, 10.0f,    0.0f, -1.0f, 0.0f,  //2
+         10.0f, 0.0f,  10.0f,  10.0f, 10.0f,    0.0f, -1.0f, 0.0f   //3
+    };
+
+    CalculateAverageNormals(Indicies, 12, GeometryVertices, 32, 8, 5);
 
     Mesh* Object1 = new Mesh();
-    Object1->CreateMesh(GeometryVerticies, Indicies, 32, 12);
+    Object1->CreateMesh(GeometryVertices, Indicies, 32, 12);
     Meshes.push_back(Object1);
 
     Mesh* Object2 = new Mesh();
-    Object2->CreateMesh(GeometryVerticies, Indicies, 32, 12);
+    Object2->CreateMesh(GeometryVertices, Indicies, 32, 12);
     Meshes.push_back(Object2);
+
+    Mesh* Object3 = new Mesh();
+    Object3->CreateMesh(FloorVertices, FloorIndicies, 32, 6);
+    Meshes.push_back(Object3);
 }
 
 void CreateShaders()
@@ -165,6 +186,8 @@ int main()
     BrickTexture.LoadTexture();
     DirtTexture = Texture("Textures/dirt.png");
     DirtTexture.LoadTexture();
+    PlainTexture = Texture("Textures/plain.png");
+    PlainTexture.LoadTexture();
 
     ShinyMaterial = Material(1.0f, 16);
     DullMaterial = Material(0.3f, 4);
@@ -185,19 +208,19 @@ int main()
     // Params 6-8: Position (Line 3)
     // Params 9-11: Constant, Linear, Exponent (Line 4)
     PointLights[0] = PointLight(0.0f, 1.0f, 0.0f,
-                                0.1f, 1.0f,
-                                -4.0f,0.0f, 0.0f,
-                                0.3f, 0.2f, 0.1f);
+                                0.1f, 2.0f,
+                                -5.0f,0.0f, 0.0f,
+                                0.5f, 0.2f, 0.1f);
     
     PointLights[1] = PointLight(1.0f, 0.0f, 0.0f,
-                                0.1f, 1.0f,
-                                0.0f, -4.0f, 0.0f,
-                                0.3f, 0.2f, 0.1f);
+                                0.1f, 2.0f,
+                                5.0f, 0.0f, 0.0f,
+                                0.5f, 0.2f, 0.1f);
 
     PointLights[2] = PointLight(0.0f, 0.0f, 1.0f,
-                                0.1f, 1.0f,
-                                0.0f, 0.0f, -4.0f,
-                                0.3f, 0.2f, 0.1f);
+                                0.1f, 2.0f,
+                                0.0f, 0.0f, -6.0f,
+                                0.5f, 0.2f, 0.1f);
     
 
     // Default values for Uniform IDs, updates in While loop per-shader.
@@ -256,11 +279,13 @@ int main()
         // Bind the Eye Position based on the Camera location
         glUniform3f(UniformEyePosition, MyCamera.GetCameraPosition().x, MyCamera.GetCameraPosition().y, MyCamera.GetCameraPosition().z);
 
+
+        //----------------[Start Mesh 0]--------------------------------
         // Defines a 4x4 matrix for the Model Matrix (1.0f) initializes as a Identity Matrix
         glm::mat4 Model(1.0f);
 
         // Update the Transform by the Model Matrix
-        // Note these are applied in reserve order to the object
+        // Note these are applied in reverse order to the object
         Model = glm::translate(Model, glm::vec3(-2.0f, 0.0f, -2.5f));
         // Model = glm::rotate(Model, 0.0f, glm::vec3(0.5f, 0.5f, 0.5f)); 
         // Model = glm::scale(Model, glm::vec3(0.25f, 0.25f, 0.25f));
@@ -276,7 +301,9 @@ int main()
 
         // Render mesh 0
         Meshes[0]->RenderMesh();
+        //----------------[End Mesh 0]--------------------------------
 
+        //----------------[Start Mesh 1]--------------------------------
         // Refresh & create new Model info for 2nd Mesh, View & Projection is re-used
         Model = glm::mat4(1.0f);
         Model = glm::translate(Model, glm::vec3(2.0f, 0.0f, -2.5f));
@@ -293,6 +320,29 @@ int main()
 
         // Render mesh 1
         Meshes[1]->RenderMesh();
+        //----------------[End Mesh 1]--------------------------------
+
+        //----------------[Start Mesh 2]--------------------------------
+        // Refresh & create new Model info for floor Mesh, View & Projection is re-used
+        Model = glm::mat4(1.0f);
+        Model = glm::translate(Model, glm::vec3(0.0f, -1.0f, 0.0f));
+        // Model = glm::rotate(Model, 0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+        // Model = glm::rotate(Model, 0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+        // Model = glm::scale(Model, glm::vec3(0.25f, 0.25f, 0.25f));
+        glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
+
+        // Use Dirt Texture
+        PlainTexture.UseTexture();
+
+        // Use dull Material
+        DullMaterial.UseMaterial(UniformSpecularIntensity, UniformShininess);
+
+        // Render mesh 1
+        Meshes[2]->RenderMesh();
+
+        //----------------[End Mesh 2]--------------------------------
+        
+
 
         // Clear the Shader Program
         glUseProgram(0);
