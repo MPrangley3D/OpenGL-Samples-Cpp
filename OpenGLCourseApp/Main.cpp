@@ -13,19 +13,24 @@
 #include <GLM/gtc/matrix_transform.hpp>
 #include <GLM/gtc/type_ptr.hpp>
 
+#include "CommonValues.h"
+
 #include "Mesh.h"
 #include "Shader.h"
 #include "GLWindow.h"
 #include "Camera.h"
 #include "Texture.h"
-#include "Light.h"
+#include "DirectionalLight.h"
+#include "PointLight.h"
 #include "Material.h"
 
 GLWindow MainWindow;
 std::vector<Mesh*> Meshes;
 std::vector<Shader> Shaders;
 Camera MyCamera;
-Light AmbientLight;
+
+DirectionalLight MainLight;
+PointLight PointLights[MAX_POINT_LIGHTS];
 
 Texture BrickTexture;
 Texture DirtTexture;
@@ -164,18 +169,42 @@ int main()
     ShinyMaterial = Material(1.0f, 16);
     DullMaterial = Material(0.3f, 4);
 
-    AmbientLight = Light(0.9f,  0.9f,  1.0f, 0.1f, 
-                         2.0f, -1.0f, -2.0f, 0.7f);
+    // Params 1-3: Ambient RGB (Line 1)
+    // Param 4: Ambient Intensity (Line 2)
+    // Param 5: Diffuse Intensity (Line 2)
+    // Params 6-8: Direction (Line 3)
+    MainLight = DirectionalLight(1.0f,  1.0f,  1.0f, 
+                                 0.1f, 0.3f,
+                                 0.0f, 0.0f, -1.0f);
+
+    unsigned int PointLightCount = 1;
+
+    // Params 1-3: Ambient RGB (Line 1)
+    // Param 4: Ambient Intensity (Line 2)
+    // Param 5: Diffuse Intensity (Line 2)
+    // Params 6-8: Position (Line 3)
+    // Params 9-11: Constant, Linear, Exponent (Line 4)
+    PointLights[0] = PointLight(0.0f, 1.0f, 0.0f,
+                                0.1f, 1.0f,
+                                -4.0f,0.0f, 0.0f,
+                                0.3f, 0.2f, 0.1f);
+    /*
+    PointLights[1] = PointLight(1.0f, 0.0f, 0.0f,
+                                0.1f, 1.0f,
+                                0.0f, -4.0f, 0.0f,
+                                0.3f, 0.2f, 0.1f);
+
+    PointLights[2] = PointLight(0.0f, 0.0f, 1.0f,
+                                0.1f, 1.0f,
+                                0.0f, 0.0f, -4.0f,
+                                0.3f, 0.2f, 0.1f);
+    */
 
     // Default values for Uniform IDs, updates in While loop per-shader.
     GLuint UniformProjection = 0;
     GLuint UniformView = 0;
     GLuint UniformModel = 0;
     GLuint UniformEyePosition = 0;
-    GLuint UniformAmbientColor = 0;
-    GLuint UniformAmbientIntensity = 0;
-    GLuint UniformDiffuseIntensity = 0;
-    GLuint UniformLightDirection = 0;
     GLuint UniformSpecularIntensity = 0;
     GLuint UniformShininess = 0;
 
@@ -211,15 +240,12 @@ int main()
         UniformProjection = Shaders[0].GetProjectionLocation();
         UniformView = Shaders[0].GetViewLocation();
         UniformEyePosition = Shaders[0].GetEyePositionLocation();
-        UniformAmbientColor = Shaders[0].GetAmbientColorLocation();
-        UniformAmbientIntensity = Shaders[0].GetAmbientIntensityLocation();
-        UniformDiffuseIntensity = Shaders[0].GetDiffuseIntensityLocation();
-        UniformLightDirection = Shaders[0].GetLightDirectionLocation();
         UniformSpecularIntensity = Shaders[0].GetSpecularIntensityLocation();
         UniformShininess = Shaders[0].GetShininessLocation();
 
         // Sets up light in shaders
-        AmbientLight.UseLight(UniformAmbientIntensity, UniformAmbientColor, UniformDiffuseIntensity, UniformLightDirection);
+        Shaders[0].SetDirectionalLight(&MainLight);
+        Shaders[0].SetPointLights(PointLights, PointLightCount);
 
         // Bind the Uniform Perspective / Projection Matrix
         glUniformMatrix4fv(UniformProjection, 1, GL_FALSE, glm::value_ptr(Projection));
