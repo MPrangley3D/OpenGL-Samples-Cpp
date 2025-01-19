@@ -177,7 +177,7 @@ int main()
                                  0.1f, 0.3f,
                                  0.0f, 0.0f, -1.0f);
 
-    unsigned int PointLightCount = 1;
+    unsigned int PointLightCount = 3;
 
     // Params 1-3: Ambient RGB (Line 1)
     // Param 4: Ambient Intensity (Line 2)
@@ -188,7 +188,7 @@ int main()
                                 0.1f, 1.0f,
                                 -4.0f,0.0f, 0.0f,
                                 0.3f, 0.2f, 0.1f);
-    /*
+    
     PointLights[1] = PointLight(1.0f, 0.0f, 0.0f,
                                 0.1f, 1.0f,
                                 0.0f, -4.0f, 0.0f,
@@ -198,7 +198,7 @@ int main()
                                 0.1f, 1.0f,
                                 0.0f, 0.0f, -4.0f,
                                 0.3f, 0.2f, 0.1f);
-    */
+    
 
     // Default values for Uniform IDs, updates in While loop per-shader.
     GLuint UniformProjection = 0;

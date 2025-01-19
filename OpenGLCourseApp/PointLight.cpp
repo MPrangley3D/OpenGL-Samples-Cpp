@@ -1,6 +1,6 @@
 #include "PointLight.h"
 
-PointLight::PointLight()
+PointLight::PointLight() : Light()
 {
 	Position = glm::vec3(0.0f, 0.0f, 0.0f);
 	Constant = 1.0f;  // Ensures we don't divide by 0

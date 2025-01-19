@@ -33,7 +33,7 @@ public:
 	void UseShader();
 	void ClearShader();
 	void SetDirectionalLight(DirectionalLight* MyDirectionalLight);
-	void SetPointLights(PointLight* MyPointLights, unsigned int PointLightCount);
+	void SetPointLights(PointLight* MyPointLights, unsigned int NewLightCount);
 
 	~Shader();
 
