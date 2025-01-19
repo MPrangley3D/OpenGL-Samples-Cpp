@@ -9,10 +9,11 @@ class Texture
 
 public:
 	Texture();
-	Texture(char* FilePath);
+	Texture(const char* FilePath);
 	~Texture();
 
-	void LoadTexture();
+	bool LoadTexture();
+	bool LoadAlphaTexture();
 	void UseTexture();
 	void ClearTexture();
 
@@ -21,6 +22,6 @@ private:
 	int Width;
 	int Height;
 	int BitDepth;
-	char* FilePath;
+	const char* FilePath;
 };
 

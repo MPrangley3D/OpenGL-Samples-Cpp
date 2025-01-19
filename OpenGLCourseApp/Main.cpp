@@ -25,6 +25,12 @@
 #include "SpotLight.h"
 #include "Material.h"
 
+#include "Model.h"
+
+#include "assimp/Importer.hpp"
+
+const float ToRadians = 3.14159265f / 180.0f;
+
 GLWindow MainWindow;
 std::vector<Mesh*> Meshes;
 std::vector<Shader> Shaders;
@@ -40,6 +46,9 @@ Texture PlainTexture;
 
 Material ShinyMaterial;
 Material DullMaterial;
+
+Model XWing;
+Model Chopper;
 
 GLfloat DeltaTime = 0.0f;
 GLfloat LastTime = 0.0f;
@@ -185,14 +194,19 @@ int main()
     MyCamera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f, 1.0f, 0.1f);
 
     BrickTexture = Texture("Textures/brick.png");
-    BrickTexture.LoadTexture();
+    BrickTexture.LoadAlphaTexture();
     DirtTexture = Texture("Textures/dirt.png");
-    DirtTexture.LoadTexture();
+    DirtTexture.LoadAlphaTexture();
     PlainTexture = Texture("Textures/plain.png");
-    PlainTexture.LoadTexture();
+    PlainTexture.LoadAlphaTexture();
 
     ShinyMaterial = Material(1.0f, 16);
     DullMaterial = Material(0.3f, 4);
+
+    XWing = Model();
+    XWing.LoadModel("Models/x-wing.obj");
+    Chopper = Model();
+    Chopper.LoadModel("Models/uh60.obj");
 
     // Params 1-3: Ambient RGB (Line 1)
     // Param 4: Ambient Intensity (Line 2)
@@ -381,8 +395,42 @@ int main()
 
         //----------------[End Mesh 2]--------------------------------
         
+        
+        //----------------[Start X-Wing]--------------------------------
+        // Refresh & create new Model info for floor Mesh, View & Projection is re-used
+        Model = glm::mat4(1.0f);
+        Model = glm::translate(Model, glm::vec3(-7.0f, 0.0f, 5.0f));
+        // Model = glm::rotate(Model, 0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+        // Model = glm::rotate(Model, 0.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+        Model = glm::scale(Model, glm::vec3(0.006f, 0.006f, 0.006f));
+        glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
 
+        // Use shiny Material
+        ShinyMaterial.UseMaterial(UniformSpecularIntensity, UniformShininess);
 
+        // Render mesh
+        XWing.RenderModel();
+        //----------------[End X-Wing]--------------------------------
+        
+        
+        //----------------[Start Chopper]--------------------------------
+        // Refresh & create new Model info for floor Mesh, View & Projection is re-used
+        Model = glm::mat4(1.0f);
+        Model = glm::translate(Model, glm::vec3(-2.0f, 0.0f, -5.0f));
+        Model = glm::rotate(Model, 270.0f * ToRadians, glm::vec3(1.0f, 0.0f, 0.0f));
+        Model = glm::rotate(Model, 180.0f * ToRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+        Model = glm::scale(Model, glm::vec3(0.2f, 0.2f, 0.2f));
+        glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
+
+        // Use shiny Material
+        DullMaterial.UseMaterial(UniformSpecularIntensity, UniformShininess);
+
+        // Render mesh 1
+        Chopper.RenderModel();
+        //----------------[End Chopper]--------------------------------
+        
+
+        
         // Clear the Shader Program
         glUseProgram(0);
 
