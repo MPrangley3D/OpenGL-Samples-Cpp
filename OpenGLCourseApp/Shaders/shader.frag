@@ -8,6 +8,7 @@ in vec3 FragmentPosition;
 out vec4 color;
 
 const int MAX_POINT_LIGHTS = 3;
+const int MAX_SPOT_LIGHTS = 3;
 
 struct Light
 {
@@ -31,6 +32,13 @@ struct PointLight
     float Exponent;
 };
 
+struct SpotLight
+{
+    PointLight Base;
+    vec3 Direction;
+    float Edge;
+};
+
 struct Material
 {
     float SpecularIntensity;
@@ -38,9 +46,11 @@ struct Material
 };
 
 uniform int PointLightCount;
+uniform int SpotLightCount;
 
 uniform DirectionalLight MyDirectionalLight;
 uniform PointLight MyPointLights[MAX_POINT_LIGHTS];
+uniform SpotLight MySpotLights[MAX_SPOT_LIGHTS];
 
 uniform sampler2D MyTexture;
 uniform Material MyMaterial;
@@ -73,10 +83,43 @@ vec4 CalculateLightByDirection(Light TheLight, vec3 TheDirection)
     return (AmbientColor + DiffuseColor + SpecularColor);
 }
 
-
 vec4 CalculateDirectionalLight()
 {
     return CalculateLightByDirection(MyDirectionalLight.Base, MyDirectionalLight.Direction);
+}
+
+vec4 CalculatePointLight(PointLight InLight)
+{
+        vec3 Direction = FragmentPosition - InLight.Position;
+        float Distance = length(Direction);
+        Direction = normalize(Direction);
+
+
+        vec4 PointColor = CalculateLightByDirection(InLight.Base, Direction);
+
+        // ax^2 + bx + c  (Where Distance == x)
+        float Attenuation = InLight.Exponent * Distance * Distance + 
+                            InLight.Linear * Distance + 
+                            InLight.Constant;
+        Attenuation = max(Attenuation, 0.0001); // Avoid division by zero
+        return (PointColor / Attenuation);
+}
+
+vec4 CalculateSpotLight(SpotLight InSpot)
+{
+    vec3 RayDirection = normalize(FragmentPosition - InSpot.Base.Position);
+    float SpotFactor = dot(RayDirection, InSpot.Direction);
+
+    if(SpotFactor > InSpot.Edge)
+    {
+        vec4 SpotColor = CalculatePointLight(InSpot.Base);
+
+        return SpotColor;
+    }
+    else
+    {
+        return vec4(0, 0, 0, 0);
+    }
 }
 
 vec4 CalculatePointLights()
@@ -84,17 +127,18 @@ vec4 CalculatePointLights()
     vec4 TotalColor = vec4(0,0,0,0);
     for(int i = 0; i < PointLightCount; i++)
     {
-        vec3 Direction = FragmentPosition - MyPointLights[i].Position;
-        float Distance = length(Direction);
-        Direction = normalize(Direction);
+        TotalColor += CalculatePointLight(MyPointLights[i]);
+    }
 
+    return TotalColor;
+}
 
-        vec4 PointColor = CalculateLightByDirection(MyPointLights[i].Base, Direction);
-
-        // ax^2 + bx + c  (Where Distance == x)
-        float Attenuation = MyPointLights[i].Exponent * Distance * Distance + MyPointLights[i].Linear * Distance + MyPointLights[i].Constant;
-        Attenuation = max(Attenuation, 0.0001); // Avoid division by zero
-        TotalColor += (PointColor / Attenuation);
+vec4 CalculateSpotLights()
+{
+    vec4 TotalColor = vec4(0, 0, 0, 0);
+    for(int i = 0; i < SpotLightCount; i++)
+    {
+        TotalColor += CalculateSpotLight(MySpotLights[i]);
     }
 
     return TotalColor;
@@ -104,5 +148,6 @@ void main()
 {
     vec4 FinalColor = CalculateDirectionalLight();
     FinalColor += CalculatePointLights();
+    FinalColor += CalculateSpotLights();
     color = texture(MyTexture, TexCoord) * FinalColor;
 }

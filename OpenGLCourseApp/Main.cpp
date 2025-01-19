@@ -22,6 +22,7 @@
 #include "Texture.h"
 #include "DirectionalLight.h"
 #include "PointLight.h"
+#include "SpotLight.h"
 #include "Material.h"
 
 GLWindow MainWindow;
@@ -31,6 +32,7 @@ Camera MyCamera;
 
 DirectionalLight MainLight;
 PointLight PointLights[MAX_POINT_LIGHTS];
+SpotLight SpotLights[MAX_SPOT_LIGHTS];
 
 Texture BrickTexture;
 Texture DirtTexture;
@@ -197,7 +199,7 @@ int main()
     // Param 5: Diffuse Intensity (Line 2)
     // Params 6-8: Direction (Line 3)
     MainLight = DirectionalLight(1.0f,  1.0f,  1.0f, 
-                                 0.1f, 0.3f,
+                                 0.1f, 0.2f,
                                  0.0f, 0.0f, -1.0f);
 
     unsigned int PointLightCount = 3;
@@ -208,20 +210,37 @@ int main()
     // Params 6-8: Position (Line 3)
     // Params 9-11: Constant, Linear, Exponent (Line 4)
     PointLights[0] = PointLight(0.0f, 1.0f, 0.0f,
-                                0.1f, 2.0f,
+                                0.1f, 0.2f,
                                 -5.0f,0.0f, 0.0f,
                                 0.5f, 0.2f, 0.1f);
     
     PointLights[1] = PointLight(1.0f, 0.0f, 0.0f,
-                                0.1f, 2.0f,
+                                0.1f, 0.2f,
                                 5.0f, 0.0f, 0.0f,
                                 0.5f, 0.2f, 0.1f);
 
     PointLights[2] = PointLight(0.0f, 0.0f, 1.0f,
-                                0.1f, 2.0f,
+                                0.1f, 0.2f,
                                 0.0f, 0.0f, -6.0f,
                                 0.5f, 0.2f, 0.1f);
-    
+
+
+    unsigned int SpotLightCount = 1;
+    // Params 1-3: Ambient RGB (Line 1)
+    // Param 4: Ambient Intensity (Line 2)
+    // Param 5: Diffuse Intensity (Line 2)
+    // Params 6-8: Position (Line 3)
+    // Params 9-11: Direction (Line 4)
+    // Params 12-15: Constant, Linear, Exponent (Line 5)
+    // Param 16:  Edge (Line 6)
+    SpotLights[0] = SpotLight(0.0f, 1.0f, 1.0f,
+                                0.0f,  1.0f,
+                                0.0f,  0.0f,  0.0f,
+                                0.0f, -1.0f, -0.5f,
+                                0.3f,  0.2f,  0.1f,
+                                55.0f);
+
+
 
     // Default values for Uniform IDs, updates in While loop per-shader.
     GLuint UniformProjection = 0;
@@ -269,6 +288,7 @@ int main()
         // Sets up light in shaders
         Shaders[0].SetDirectionalLight(&MainLight);
         Shaders[0].SetPointLights(PointLights, PointLightCount);
+        Shaders[0].SetSpotLights(SpotLights, SpotLightCount);
 
         // Bind the Uniform Perspective / Projection Matrix
         glUniformMatrix4fv(UniformProjection, 1, GL_FALSE, glm::value_ptr(Projection));

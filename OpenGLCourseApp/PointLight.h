@@ -13,12 +13,11 @@ public:
 	// Bind light values for use in the shader (Location here meaning the ID in the shader, not a position)
 	void UseLight(GLuint AmbientIntensityLocation, GLuint AmbientColorLocation,
 					GLuint DiffuseIntensityLocation, GLuint PositionLocation,
-					GLfloat ConstantLocation, GLfloat LinearLocation, GLfloat ExponentLocation);
-
+					GLuint ConstantLocation, GLuint LinearLocation, GLuint ExponentLocation);
 
 	~PointLight();
 
-private:
+protected:
 	glm::vec3 Position;
 
 	// Attenuation values
