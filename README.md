@@ -3,7 +3,11 @@
 
 This is a repo to store my C++ OpenGL work as I explore the OpenGL Libraries GLEW and GLFW.
 
+# Point Lights:
 <img src="Images\PointLights.png">
+
+# Spot Lights:
+<img src="Images\SpotLights.png">
 
 ## Acknowledgements
 

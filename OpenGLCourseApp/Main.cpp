@@ -147,10 +147,10 @@ void CreateObjects()
 
     GLfloat FloorVertices[] =
     {
-        -10.0f, 0.0f, -10.0f,   0.0f, 0.0f,     0.0f, -1.0f, 0.0f,  //0
-         10.0f, 0.0f, -10.0f,  10.0f, 0.0f,     0.0f, -1.0f, 0.0f,  //1
-        -10.0f, 0.0f,  10.0f,   0.0f, 10.0f,    0.0f, -1.0f, 0.0f,  //2
-         10.0f, 0.0f,  10.0f,  10.0f, 10.0f,    0.0f, -1.0f, 0.0f   //3
+        -100.0f, 0.0f, -100.0f,   0.0f, 0.0f,     0.0f, -1.0f, 0.0f,  //0
+         100.0f, 0.0f, -100.0f,  10.0f, 0.0f,     0.0f, -1.0f, 0.0f,  //1
+        -100.0f, 0.0f,  100.0f,   0.0f, 10.0f,    0.0f, -1.0f, 0.0f,  //2
+         100.0f, 0.0f,  100.0f,  10.0f, 10.0f,    0.0f, -1.0f, 0.0f   //3
     };
 
     CalculateAverageNormals(Indicies, 12, GeometryVertices, 32, 8, 5);
@@ -225,7 +225,7 @@ int main()
                                 0.5f, 0.2f, 0.1f);
 
 
-    unsigned int SpotLightCount = 1;
+    unsigned int SpotLightCount = 3;
     // Params 1-3: Ambient RGB (Line 1)
     // Param 4: Ambient Intensity (Line 2)
     // Param 5: Diffuse Intensity (Line 2)
@@ -234,11 +234,25 @@ int main()
     // Params 12-15: Constant, Linear, Exponent (Line 5)
     // Param 16:  Edge (Line 6)
     SpotLights[0] = SpotLight(0.0f, 1.0f, 1.0f,
-                                0.0f,  1.0f,
+                                0.0f,  0.5f,
                                 0.0f,  0.0f,  0.0f,
                                 0.0f, -1.0f, -0.5f,
                                 0.3f,  0.2f,  0.1f,
                                 55.0f);
+
+    SpotLights[1] = SpotLight(1.0f, 1.0f, 1.0f,
+                                0.0f, 1.0f,
+                                5.0f, 0.0f, 0.0f,
+                                0.0f, 0.0f, 0.0f,
+                                1.0f, 0.0f, 0.0f,
+                                20.0f);
+
+    SpotLights[2] = SpotLight(1.0f, 0.0f, 1.0f,
+                                0.0f, 1.5f,
+                                0.0f, 0.0f, 0.0f,
+                                10.0f, -1.0f, -10.0f,
+                                0.3f, 0.2f, 0.1f,
+                                15.0f);
 
 
 
@@ -284,6 +298,11 @@ int main()
         UniformEyePosition = Shaders[0].GetEyePositionLocation();
         UniformSpecularIntensity = Shaders[0].GetSpecularIntensityLocation();
         UniformShininess = Shaders[0].GetShininessLocation();
+
+        // Attach Flashlight Spotlight
+        glm::vec3 FlashlightOffset = MyCamera.GetCameraPosition();
+        FlashlightOffset.y -= 0.3f;
+        SpotLights[1].SetFlash(FlashlightOffset, MyCamera.GetCameraDirection());
 
         // Sets up light in shaders
         Shaders[0].SetDirectionalLight(&MainLight);

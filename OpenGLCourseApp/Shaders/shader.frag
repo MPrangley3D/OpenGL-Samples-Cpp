@@ -114,7 +114,7 @@ vec4 CalculateSpotLight(SpotLight InSpot)
     {
         vec4 SpotColor = CalculatePointLight(InSpot.Base);
 
-        return SpotColor;
+        return SpotColor * (1.0f - (1.0f - SpotFactor)*(1.0f / (1.0f - InSpot.Edge)));
     }
     else
     {
