@@ -15,6 +15,10 @@ This is a repo to store my C++ OpenGL work as I explore the OpenGL Libraries GLE
 # Directional Shadowmaps
 <img src="Images\DirectionalShadowmaps.gif">
 
+# Omnidirectional Cube Maps + 'F' to toggle Flashlight 
+<img src="Images\OmniShadowmaps.gif">
+
+
 ## Acknowledgements
 
  - [Following this course by Ben Cook](https://www.udemy.com/course/graphics-with-modern-opengl/learn/lecture/10031170#overview)
