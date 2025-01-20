@@ -54,6 +54,8 @@ Model Chopper;
 GLfloat DeltaTime = 0.0f;
 GLfloat LastTime = 0.0f;
 
+GLfloat ChopperAngle = 0.0f;
+
 // Light Settings
 unsigned int PointLightCount = 3;
 unsigned int SpotLightCount = 3;
@@ -277,10 +279,18 @@ void RenderScene()
 
     //----------------[Start Chopper]--------------------------------
     // Refresh & create new Model info for floor Mesh, View & Projection is re-used
+    ChopperAngle += 0.1f;
+    if (ChopperAngle > 360)
+    {
+        ChopperAngle = 0.1;
+    }
+
     Model = glm::mat4(1.0f);
-    Model = glm::translate(Model, glm::vec3(-2.0f, 0.0f, -5.0f));
-    Model = glm::rotate(Model, 270.0f * ToRadians, glm::vec3(1.0f, 0.0f, 0.0f));
-    Model = glm::rotate(Model, 180.0f * ToRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+    Model = glm::rotate(Model, ChopperAngle * ToRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+    Model = glm::translate(Model, glm::vec3(-8.0f, 2.0f, 0.0f));
+    Model = glm::rotate(Model, 270 * ToRadians, glm::vec3(1.0f, 0.0f, 0.0f));
+    Model = glm::rotate(Model, 180 * ToRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+    Model = glm::rotate(Model, -30 * ToRadians, glm::vec3(0.0f, 1.0f, 0.0f));
     Model = glm::scale(Model, glm::vec3(0.2f, 0.2f, 0.2f));
     glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
 
@@ -394,7 +404,7 @@ int main()
     // Param 4: Ambient Intensity (Line 2)
     // Param 5: Diffuse Intensity (Line 2)
     // Params 6-8: Direction (Line 3)
-    MainLight = DirectionalLight(2048, 2048,
+    MainLight = DirectionalLight(4096, 4096,
                                  1.0f,  1.0f,  1.0f, 
                                  0.1f, 0.6f,
                                  50.0f,-60.0f, -20.0f);

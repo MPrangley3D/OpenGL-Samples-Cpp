@@ -66,7 +66,6 @@ float CalculateDirectionalShadowFactor(DirectionalLight Light)
     // Map "-1 to +1" to "0 to +1"
     ProjectedCoords = (ProjectedCoords * 0.5) + 0.5;
 
-    float ClosestDepth = texture(DirectionalShadowMap, ProjectedCoords.xy).r;
     float CurrentDepth = ProjectedCoords.z;
 
     vec3 MyNormal = normalize(Normal);
@@ -74,7 +73,19 @@ float CalculateDirectionalShadowFactor(DirectionalLight Light)
 
     float Bias = max(0.005 * (1 - dot(MyNormal, LightDirection)), 0.005);
 
-    float Shadow = CurrentDepth - Bias > ClosestDepth ? 1.0 : 0.0;
+    float Shadow = 0.0;
+
+    vec2 TexelSize = 1.0 / textureSize(DirectionalShadowMap, 0);
+    for(int x = -1; x <= 1; x++)
+    {
+        for(int y = -1; y <= 1; y++)
+        {
+            float PCF_Depth = texture(DirectionalShadowMap, ProjectedCoords.xy + vec2(x, y) * TexelSize).r;
+            Shadow += CurrentDepth - Bias > PCF_Depth ? 1.0 : 0.0;
+        }
+    }
+
+    Shadow /= 9.0f;
 
     if(ProjectedCoords.z > 1.0)
     {
