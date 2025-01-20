@@ -40,6 +40,12 @@ struct SpotLight
     float Edge;
 };
 
+struct OmniShadowMap
+{
+    samplerCube ShadowMapCube;
+    float FarPlane;
+};
+
 struct Material
 {
     float SpecularIntensity;
@@ -58,6 +64,7 @@ uniform sampler2D DirectionalShadowMap;
 uniform Material MyMaterial;
 uniform vec3 EyePosition;
 
+uniform OmniShadowMap OmniShadowMaps[MAX_POINT_LIGHTS + MAX_SPOT_LIGHTS];
 
 
 float CalculateDirectionalShadowFactor(DirectionalLight Light)
@@ -121,20 +128,37 @@ vec4 CalculateLightByDirection(Light TheLight, vec3 TheDirection, float ShadowFa
     return (AmbientColor + (1.0 - ShadowFactor) * (DiffuseColor + SpecularColor));
 }
 
+float CalculateOmniShadowFactor(PointLight InLight, int ShadowIndex)
+{
+    vec3 FragmentToLight = FragmentPosition - InLight.Position;
+    float ClosestDepth = texture(OmniShadowMaps[ShadowIndex].ShadowMapCube, FragmentToLight).r;
+
+    ClosestDepth *= OmniShadowMaps[ShadowIndex].FarPlane;
+
+    float CurrentDepth = length(FragmentToLight);
+
+    float Bias = 0.05;
+    float Shadow = CurrentDepth - Bias > ClosestDepth ? 1.0 : 0.0;
+
+    return Shadow;
+}
+
+
 vec4 CalculateDirectionalLight()
 {
     float ShadowFactor = CalculateDirectionalShadowFactor(MyDirectionalLight);
     return CalculateLightByDirection(MyDirectionalLight.Base, MyDirectionalLight.Direction, ShadowFactor);
 }
 
-vec4 CalculatePointLight(PointLight InLight)
+vec4 CalculatePointLight(PointLight InLight, int ShadowIndex)
 {
         vec3 Direction = FragmentPosition - InLight.Position;
         float Distance = length(Direction);
         Direction = normalize(Direction);
 
+        float ShadowFactor = CalculateOmniShadowFactor(InLight, ShadowIndex);
 
-        vec4 PointColor = CalculateLightByDirection(InLight.Base, Direction, 0.0f);
+        vec4 PointColor = CalculateLightByDirection(InLight.Base, Direction, ShadowFactor);
 
         // ax^2 + bx + c  (Where Distance == x)
         float Attenuation = InLight.Exponent * Distance * Distance + 
@@ -144,14 +168,14 @@ vec4 CalculatePointLight(PointLight InLight)
         return (PointColor / Attenuation);
 }
 
-vec4 CalculateSpotLight(SpotLight InSpot)
+vec4 CalculateSpotLight(SpotLight InSpot, int ShadowIndex)
 {
     vec3 RayDirection = normalize(FragmentPosition - InSpot.Base.Position);
     float SpotFactor = dot(RayDirection, InSpot.Direction);
 
     if(SpotFactor > InSpot.Edge)
     {
-        vec4 SpotColor = CalculatePointLight(InSpot.Base);
+        vec4 SpotColor = CalculatePointLight(InSpot.Base, ShadowIndex);
 
         return SpotColor * (1.0f - (1.0f - SpotFactor)*(1.0f / (1.0f - InSpot.Edge)));
     }
@@ -166,7 +190,7 @@ vec4 CalculatePointLights()
     vec4 TotalColor = vec4(0,0,0,0);
     for(int i = 0; i < PointLightCount; i++)
     {
-        TotalColor += CalculatePointLight(MyPointLights[i]);
+        TotalColor += CalculatePointLight(MyPointLights[i], i);
     }
 
     return TotalColor;
@@ -177,7 +201,7 @@ vec4 CalculateSpotLights()
     vec4 TotalColor = vec4(0, 0, 0, 0);
     for(int i = 0; i < SpotLightCount; i++)
     {
-        TotalColor += CalculateSpotLight(MySpotLights[i]);
+        TotalColor += CalculateSpotLight(MySpotLights[i], i + PointLightCount);
     }
 
     return TotalColor;

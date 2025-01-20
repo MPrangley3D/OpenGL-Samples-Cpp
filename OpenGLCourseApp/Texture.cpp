@@ -99,7 +99,7 @@ bool Texture::LoadTexture()
 void Texture::UseTexture()
 {
 	// Sets the active "Texture Unit" (Most cards have at least 16, up to 32.
-	glActiveTexture(GL_TEXTURE0);
+	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, TextureID);
 }
 

@@ -84,6 +84,9 @@ static const char* OmniGeometryShader = "Shaders/omni_shadow_map.geom";
 int ViewportWidth = 1366;
 int ViewportHeight = 768;
 
+// Toggles Flashlight Spotlight on & off
+bool bEnableFlashlight = false;
+
 // Vertex Shader
 /*
 Version must match our Major and Minor versions as set in GLFW_CONTEXT_VERSION_MAJOR/MINOR
@@ -333,10 +336,13 @@ void DirectionalShadowMapPass(DirectionalLight* Light)
     UniformModel = DirectionalShadowShader.GetModelLocation();
     DirectionalShadowShader.SetDirectionalLightTransform(&Light->CalculateLightTransform());
 
+    // Validate the Shader before Rendering
+    DirectionalShadowShader.ValidateShader();
+
     // Render the depth pass
     RenderScene();
 
-    // Unbinds frame buffwer
+    // Unbinds frame buffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -359,6 +365,9 @@ void OmniShadowMapPass(PointLight* Light)
     glUniform1f(UniformFarPlane, Light->GetFarPlane());
     OmniShadowShader.SetOmniLightMatrices(Light->CalculateLightTransforms());
 
+    // Validate the Shader before Rendering
+    OmniShadowShader.ValidateShader();
+
     // Render the depth pass
     RenderScene();
 
@@ -379,7 +388,7 @@ void RenderPass(glm::mat4 ProjectionMatrix, glm::mat4 ViewMatrix)
     UniformSpecularIntensity = Shaders[0].GetSpecularIntensityLocation();
     UniformShininess = Shaders[0].GetShininessLocation();
 
-    // Verify viewport settings (In case they were cahnged by depth buffer/etc
+    // Verify viewport settings (In case they were changed by depth buffer/etc
     glViewport(0, 0, ViewportWidth, ViewportHeight);
 
     // Clear window
@@ -390,15 +399,15 @@ void RenderPass(glm::mat4 ProjectionMatrix, glm::mat4 ViewMatrix)
 
     // Sets up light in shaders
     Shaders[0].SetDirectionalLight(&MainLight);
-    Shaders[0].SetPointLights(PointLights, PointLightCount);
-    Shaders[0].SetSpotLights(SpotLights, SpotLightCount);
+    Shaders[0].SetPointLights(PointLights, PointLightCount, 3, 0);
+    Shaders[0].SetSpotLights(SpotLights, SpotLightCount, 3 + PointLightCount, PointLightCount);
     Shaders[0].SetDirectionalLightTransform(&MainLight.CalculateLightTransform());
 
-    MainLight.GetShadowMap()->Read(GL_TEXTURE1);
+    MainLight.GetShadowMap()->Read(GL_TEXTURE2);
 
-    // Set GL_TEXTURE0 as Texture and GL_TEXTURE1 as the Shadow Map
-    Shaders[0].SetTexture(0);
-    Shaders[0].SetDirectionalShadowMap(1);
+    // Set GL_TEXTURE1 as Texture and GL_TEXTURE2 as the Shadow Map (0 reserved for defaults)
+    Shaders[0].SetTexture(1);
+    Shaders[0].SetDirectionalShadowMap(2);
 
 
     // Bind the Uniform Perspective / Projection Matrix
@@ -411,10 +420,18 @@ void RenderPass(glm::mat4 ProjectionMatrix, glm::mat4 ViewMatrix)
     glUniform3f(UniformEyePosition, MyCamera.GetCameraPosition().x, MyCamera.GetCameraPosition().y, MyCamera.GetCameraPosition().z);
 
     // Attach Flashlight Spotlight
-    glm::vec3 FlashlightOffset = MyCamera.GetCameraPosition();
-    FlashlightOffset.y -= 0.3f;
-    SpotLights[1].SetFlash(FlashlightOffset, MyCamera.GetCameraDirection());
+    if (bEnableFlashlight)
+    {
+        glm::vec3 FlashlightOffset = MyCamera.GetCameraPosition();
+        FlashlightOffset.y -= 0.1f;
+        SpotLights[1].SetFlash(FlashlightOffset, MyCamera.GetCameraDirection());
+    }
+
     
+    // Validate the Shader before Rendering
+    Shaders[0].ValidateShader();
+
+    // Render the depth pass
     RenderScene();
 }
 
@@ -448,7 +465,7 @@ int main()
     // Params 6-8: Direction (Line 3)
     MainLight = DirectionalLight(4096, 4096,
                                  1.0f,  1.0f,  1.0f, 
-                                 0.1f, 0.6f,
+                                 0.025f, 0.025f,
                                  50.0f,-60.0f, -20.0f);
 
     // Params 1-2: Shadow Width, Shadow Height (Line 1)
@@ -462,22 +479,22 @@ int main()
     PointLights[0] = PointLight(1024, 1024,
                                 0.1f, 100.0f,
                                 0.0f, 1.0f, 0.0f,
-                                0.1f, 0.2f,
-                                -5.0f,0.0f, 0.0f,
+                                0.5f, 1.0f,
+                               -5.0f, 3.0f, 0.0f,
                                 0.5f, 0.2f, 0.1f);
     
     PointLights[1] = PointLight(1024, 1024,
                                 0.1f, 100.0f, 
                                 1.0f, 0.0f, 0.0f,
-                                0.1f, 0.2f,
-                                5.0f, 0.0f, 0.0f,
+                                0.5f, 1.0f,
+                                5.0f, 3.0f, 0.0f,
                                 0.5f, 0.2f, 0.1f);
 
     PointLights[2] = PointLight(1024, 1024,
                                 0.1f, 100.0f, 
                                 0.0f, 0.0f, 1.0f,
-                                0.1f, 0.2f,
-                                0.0f, 0.0f, -6.0f,
+                                0.5f, 1.0f,
+                                0.0f, 3.0f, -6.0f,
                                 0.5f, 0.2f, 0.1f);
 
     // Params 1-2: Shadow Width, Shadow Height (Line 1)

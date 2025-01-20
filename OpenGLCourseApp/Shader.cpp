@@ -128,6 +128,27 @@ GLuint Shader::GetFarPlaneLocation()
     return UniformFarPlane;
 }
 
+void Shader::ValidateShader()
+{
+    // Logging errors for the shader
+    GLint Result = 0;
+    GLchar ErrorLog[1024] = { 0 };
+
+    // Validate Shader Program
+    glValidateProgram(ShaderID);
+    glGetProgramiv(ShaderID, GL_VALIDATE_STATUS, &Result);
+    if (!Result)
+    {
+        glGetProgramInfoLog(ShaderID, sizeof(ErrorLog), NULL, ErrorLog);
+        printf("Error validating the Shader Program: '%s'\n", ErrorLog);
+        return;
+    }
+    else
+    {
+        printf("Validation succeeded!\n");
+    }
+}
+
 void Shader::CompileShader(const char* VertexCode, const char* FragmentCode)
 {
     // Create the empty Shader Program
@@ -224,7 +245,7 @@ void Shader::SetDirectionalLight(DirectionalLight* MyDirectionalLight)
                                     UniformDirectionalLight.UniformDirection);
 }
 
-void Shader::SetPointLights(PointLight* MyPointLights, unsigned int NewLightCount)
+void Shader::SetPointLights(PointLight* MyPointLights, unsigned int NewLightCount, unsigned int TextureUnit, unsigned int Offset)
 {
     if (NewLightCount > MAX_POINT_LIGHTS)
     {
@@ -251,10 +272,14 @@ void Shader::SetPointLights(PointLight* MyPointLights, unsigned int NewLightCoun
             UniformPointLight[i].UniformConstant,
             UniformPointLight[i].UniformLinear,
             UniformPointLight[i].UniformExponent);
+
+        MyPointLights[i].GetShadowMap()->Read(GL_TEXTURE0 + TextureUnit + i);
+        glUniform1i(UniformOmniShadowMap[i + Offset].ShadowMapCube, TextureUnit + i);
+        glUniform1f(UniformOmniShadowMap[i + Offset].FarPlane, MyPointLights[i].GetFarPlane());
     }
 }
 
-void Shader::SetSpotLights(SpotLight* MySpotLights, unsigned int NewLightCount)
+void Shader::SetSpotLights(SpotLight* MySpotLights, unsigned int NewLightCount, unsigned int TextureUnit, unsigned int Offset)
 {
     if (NewLightCount > MAX_SPOT_LIGHTS)
     {
@@ -285,6 +310,10 @@ void Shader::SetSpotLights(SpotLight* MySpotLights, unsigned int NewLightCount)
             UniformSpotLight[i].UniformLinear,
             UniformSpotLight[i].UniformExponent,
             UniformSpotLight[i].UniformEdge);
+
+        MySpotLights[i].GetShadowMap()->Read(GL_TEXTURE0 + TextureUnit + i);
+        glUniform1i(UniformOmniShadowMap[i + Offset].ShadowMapCube, TextureUnit + i);
+        glUniform1f(UniformOmniShadowMap[i + Offset].FarPlane, MySpotLights[i].GetFarPlane());
     }
 }
 
@@ -370,20 +399,6 @@ void Shader::CompileProgram()
         printf("Linking Successful!\n");
     }
 
-    // Validate Shader Program
-    glValidateProgram(ShaderID);
-    glGetProgramiv(ShaderID, GL_VALIDATE_STATUS, &Result);
-    if (!Result)
-    {
-        glGetProgramInfoLog(ShaderID, sizeof(ErrorLog), NULL, ErrorLog);
-        printf("Error validating the Shader Program: '%s'\n", ErrorLog);
-        return;
-    }
-    else
-    {
-        printf("Validation succeeded!\n");
-    }
-
     // Bind uniform variables to the location of the model in the shader code
     // Note the struct member variable access for the light variables
     UniformModel = glGetUniformLocation(ShaderID, "Model");
@@ -419,6 +434,19 @@ void Shader::CompileProgram()
         // Bind light matrix for cube map face
         snprintf(LocationBuffer, sizeof(LocationBuffer), "LightMatrices[%d]", i);
         UniformLightMatrices[i] = glGetUniformLocation(ShaderID, LocationBuffer);
+    }
+
+    for (size_t i = 0; i < MAX_POINT_LIGHTS + MAX_SPOT_LIGHTS; i++)
+    {
+        char LocationBuffer[100] = { '\0' };
+
+        // Bind Shadow map to OmniShadowMap struct in shader
+        snprintf(LocationBuffer, sizeof(LocationBuffer), "OmniShadowMaps[%d].ShadowMapCube", i);
+        UniformOmniShadowMap[i].ShadowMapCube = glGetUniformLocation(ShaderID, LocationBuffer);
+
+        // Bind Far Plane to OmniShadowMap struct in shader
+        snprintf(LocationBuffer, sizeof(LocationBuffer), "OmniShadowMaps[%d].FarPlane", i);
+        UniformOmniShadowMap[i].FarPlane = glGetUniformLocation(ShaderID, LocationBuffer);
     }
 
     for (size_t i = 0; i < MAX_POINT_LIGHTS; i++)
