@@ -1,5 +1,6 @@
 #include "Shader.h"
 
+
 Shader::Shader()
 {
     ShaderID = 0;
@@ -172,6 +173,11 @@ void Shader::CompileShader(const char* VertexCode, const char* FragmentCode)
     UniformEyePosition = glGetUniformLocation(ShaderID, "EyePosition");
     UniformSpecularIntensity = glGetUniformLocation(ShaderID, "MyMaterial.SpecularIntensity");
     UniformShininess = glGetUniformLocation(ShaderID, "MyMaterial.Shininess");
+    UniformTexture = glGetUniformLocation(ShaderID, "MyTexture");
+
+    // Bind Uniforms for Directional Shadow Map
+    UniformDirectionalLightTransform = glGetUniformLocation(ShaderID, "DirectionalLightTransform");
+    UniformDirectionalShadowMap = glGetUniformLocation(ShaderID, "DirectionalShadowMap");
 
     // Bind uniforms for Directional Light
     UniformDirectionalLight.UniformAmbientIntensity = glGetUniformLocation(ShaderID, "MyDirectionalLight.Base.AmbientIntensity");
@@ -217,6 +223,7 @@ void Shader::CompileShader(const char* VertexCode, const char* FragmentCode)
 
     // Bind uniforms for Spot Lights
     UniformSpotLightCount = glGetUniformLocation(ShaderID, "SpotLightCount");
+
     for (size_t i = 0; i < MAX_SPOT_LIGHTS; i++)
     {
         char LocationBuffer[100] = { '\0' };
@@ -360,6 +367,21 @@ void Shader::SetSpotLights(SpotLight* MySpotLights, unsigned int NewLightCount)
             UniformSpotLight[i].UniformExponent,
             UniformSpotLight[i].UniformEdge);
     }
+}
+
+void Shader::SetTexture(GLuint TextureUnit)
+{
+    glUniform1i(UniformTexture, TextureUnit);
+}
+
+void Shader::SetDirectionalShadowMap(GLuint TextureUnit)
+{
+    glUniform1i(UniformDirectionalShadowMap, TextureUnit);
+}
+
+void Shader::SetDirectionalLightTransform(glm::mat4* LightTransform)
+{
+    glUniformMatrix4fv(UniformDirectionalLightTransform, 1, GL_FALSE, glm::value_ptr(*LightTransform));
 }
 
 void Shader::AddShader(GLuint TheProgram, const char* ShaderCode, GLenum ShaderType)

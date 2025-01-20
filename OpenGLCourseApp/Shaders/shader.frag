@@ -4,6 +4,7 @@ in vec4 VertexColor;
 in vec2 TexCoord;
 in vec3 Normal;
 in vec3 FragmentPosition;
+in vec4 DirectionalLightSpacePosition;
 
 out vec4 color;
 
@@ -53,11 +54,37 @@ uniform PointLight MyPointLights[MAX_POINT_LIGHTS];
 uniform SpotLight MySpotLights[MAX_SPOT_LIGHTS];
 
 uniform sampler2D MyTexture;
+uniform sampler2D DirectionalShadowMap;
 uniform Material MyMaterial;
 uniform vec3 EyePosition;
 
 
-vec4 CalculateLightByDirection(Light TheLight, vec3 TheDirection)
+
+float CalculateDirectionalShadowFactor(DirectionalLight Light)
+{
+    vec3 ProjectedCoords = DirectionalLightSpacePosition.xyz / DirectionalLightSpacePosition.w;
+    // Map "-1 to +1" to "0 to +1"
+    ProjectedCoords = (ProjectedCoords * 0.5) + 0.5;
+
+    float ClosestDepth = texture(DirectionalShadowMap, ProjectedCoords.xy).r;
+    float CurrentDepth = ProjectedCoords.z;
+
+    vec3 MyNormal = normalize(Normal);
+    vec3 LightDirection = normalize(Light.Direction);
+
+    float Bias = max(0.005 * (1 - dot(MyNormal, LightDirection)), 0.005);
+
+    float Shadow = CurrentDepth - Bias > ClosestDepth ? 1.0 : 0.0;
+
+    if(ProjectedCoords.z > 1.0)
+    {
+        Shadow = 0.0;
+    }
+
+    return Shadow;
+}
+
+vec4 CalculateLightByDirection(Light TheLight, vec3 TheDirection, float ShadowFactor)
 {
     vec4 AmbientColor = vec4(TheLight.Color, 1.0f) * TheLight.AmbientIntensity;
 
@@ -80,12 +107,13 @@ vec4 CalculateLightByDirection(Light TheLight, vec3 TheDirection)
         }
     }
 
-    return (AmbientColor + DiffuseColor + SpecularColor);
+    return (AmbientColor + (1.0 - ShadowFactor) * (DiffuseColor + SpecularColor));
 }
 
 vec4 CalculateDirectionalLight()
 {
-    return CalculateLightByDirection(MyDirectionalLight.Base, MyDirectionalLight.Direction);
+    float ShadowFactor = CalculateDirectionalShadowFactor(MyDirectionalLight);
+    return CalculateLightByDirection(MyDirectionalLight.Base, MyDirectionalLight.Direction, ShadowFactor);
 }
 
 vec4 CalculatePointLight(PointLight InLight)
@@ -95,7 +123,7 @@ vec4 CalculatePointLight(PointLight InLight)
         Direction = normalize(Direction);
 
 
-        vec4 PointColor = CalculateLightByDirection(InLight.Base, Direction);
+        vec4 PointColor = CalculateLightByDirection(InLight.Base, Direction, 0.0f);
 
         // ax^2 + bx + c  (Where Distance == x)
         float Attenuation = InLight.Exponent * Distance * Distance + 

@@ -8,14 +8,18 @@ out vec4 VertexColor;
 out vec2 TexCoord;
 out vec3 Normal;
 out vec3 FragmentPosition;
+out vec4 DirectionalLightSpacePosition;
 
 uniform mat4 Model;
 uniform mat4 View;
 uniform mat4 Projection;
+uniform mat4 DirectionalLightTransform;
 
 void main()
 {
     gl_Position = Projection * View * Model * vec4(pos,1.0);
+    DirectionalLightSpacePosition = DirectionalLightTransform * Model * vec4(pos,1.0);
+    
     VertexColor = vec4(clamp(pos, 0.0f, 1.0f), 1.0f);
 
     TexCoord = tex;

@@ -6,6 +6,8 @@
 #include <fstream>
 
 #include <GL/glew.h>
+#include <GLM/glm.hpp>
+#include <GLM/gtc/type_ptr.hpp>
 
 #include "CommonValues.h"
 #include "DirectionalLight.h"
@@ -36,6 +38,9 @@ public:
 	void SetDirectionalLight(DirectionalLight* MyDirectionalLight);
 	void SetPointLights(PointLight* MyPointLights, unsigned int NewLightCount);
 	void SetSpotLights(SpotLight* MySpotLights, unsigned int NewLightCount);
+	void SetTexture(GLuint TextureUnit);
+	void SetDirectionalShadowMap(GLuint TextureUnit);
+	void SetDirectionalLightTransform(glm::mat4* LightTransform);
 
 	~Shader();
 
@@ -97,6 +102,11 @@ private:
 	// Material Values
 	GLuint UniformSpecularIntensity;
 	GLuint UniformShininess;
+	GLuint UniformTexture;
+
+	// Shadow Map Values
+	GLuint UniformDirectionalLightTransform;
+	GLuint UniformDirectionalShadowMap;
 
 	void CompileShader(const char* VertexCode, const char* FragmentCode);
 	void AddShader(GLuint TheProgram, const char* ShaderCode, GLenum ShaderType);
