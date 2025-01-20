@@ -11,7 +11,7 @@ class ShadowMap
 public:
 	ShadowMap();
 
-	virtual bool Initialize(GLuint Width, GLuint Height);
+	virtual bool Initialize(unsigned int Width, unsigned int Height);
 	virtual void Write();
 	virtual void Read(GLenum TextureUnit);
 	GLuint GetShadowWidth() { return ShadowWidth; }
@@ -19,7 +19,7 @@ public:
 
 	~ShadowMap();
 
-private:
+protected:
 	GLuint FrameBufferObject;
 	GLuint MyShadowMap;
 	GLuint ShadowWidth;

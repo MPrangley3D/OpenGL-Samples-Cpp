@@ -8,7 +8,7 @@ ShadowMap::ShadowMap()
 	ShadowHeight = 0;
 }
 
-bool ShadowMap::Initialize(GLuint Width, GLuint Height)
+bool ShadowMap::Initialize(unsigned int Width, unsigned int Height)
 {
 	ShadowWidth = Width;
 	ShadowHeight = Height;
@@ -58,7 +58,7 @@ bool ShadowMap::Initialize(GLuint Width, GLuint Height)
 void ShadowMap::Write()
 {
 	// Bind Framebuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, FrameBufferObject);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, FrameBufferObject);
 }
 
 void ShadowMap::Read(GLenum TextureUnit)
