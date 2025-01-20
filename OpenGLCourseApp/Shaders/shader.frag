@@ -66,6 +66,15 @@ uniform vec3 EyePosition;
 
 uniform OmniShadowMap OmniShadowMaps[MAX_POINT_LIGHTS + MAX_SPOT_LIGHTS];
 
+vec3 SampleDisk[20] = vec3[]
+(
+   vec3(1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+   vec3(1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+   vec3(1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+   vec3(1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+   vec3(0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
+);
+
 
 float CalculateDirectionalShadowFactor(DirectionalLight Light)
 {
@@ -131,15 +140,26 @@ vec4 CalculateLightByDirection(Light TheLight, vec3 TheDirection, float ShadowFa
 float CalculateOmniShadowFactor(PointLight InLight, int ShadowIndex)
 {
     vec3 FragmentToLight = FragmentPosition - InLight.Position;
-    float ClosestDepth = texture(OmniShadowMaps[ShadowIndex].ShadowMapCube, FragmentToLight).r;
-
-    ClosestDepth *= OmniShadowMaps[ShadowIndex].FarPlane;
-
     float CurrentDepth = length(FragmentToLight);
 
+    float Shadow = 0.0;
     float Bias = 0.05;
-    float Shadow = CurrentDepth - Bias > ClosestDepth ? 1.0 : 0.0;
+    float Samples = 20;
 
+    float ViewDistance = length(EyePosition - FragmentPosition);
+    float DiskRadius = (1.0 + (ViewDistance / OmniShadowMaps[ShadowIndex].FarPlane)) / 25.0;
+
+    for(int i = 0; i < Samples; i++)
+    {
+        float ClosestDepth = texture(OmniShadowMaps[ShadowIndex].ShadowMapCube, FragmentToLight + SampleDisk[i] * DiskRadius).r;
+        ClosestDepth *= OmniShadowMaps[ShadowIndex].FarPlane;
+        if(CurrentDepth - Bias > ClosestDepth)
+        {
+            Shadow += 1.0;
+        }
+    }
+
+    Shadow /= float(Samples);
     return Shadow;
 }
 

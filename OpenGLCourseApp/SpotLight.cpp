@@ -5,6 +5,7 @@ SpotLight::SpotLight() : PointLight()
 	Direction = glm::vec3(0.0f, -1.0f, 0.0f);
 	Edge = 0.0f;
 	ProcessedEdge = cosf(glm::radians(Edge));
+	bEnableFlashlight = true;
 }
 
 SpotLight::SpotLight(GLfloat NewShadowWidth, GLfloat NewShadowHeight,
@@ -27,8 +28,16 @@ void SpotLight::UseLight(GLuint AmbientIntensityLocation, GLuint AmbientColorLoc
 	GLuint EdgeLocation)
 {
 	glUniform3f(AmbientColorLocation, Color.x, Color.y, Color.z);
-	glUniform1f(AmbientIntensityLocation, AmbientIntensity);
-	glUniform1f(DiffuseIntensityLocation, DiffuseIntensity);
+	if (bEnableFlashlight)
+	{
+		glUniform1f(AmbientIntensityLocation, AmbientIntensity);
+		glUniform1f(DiffuseIntensityLocation, DiffuseIntensity);
+	}
+	else
+	{
+		glUniform1f(AmbientIntensityLocation, 0.0f);
+		glUniform1f(DiffuseIntensityLocation, 0.0f);
+	}
 	glUniform3f(PositionLocation, Position.x, Position.y, Position.z);
 	glUniform1f(ConstantLocation, Constant);
 	glUniform1f(LinearLocation, Linear);
@@ -41,6 +50,11 @@ void SpotLight::SetFlash(glm::vec3 FlashPosition, glm::vec3 FlashDirection)
 {
 	Position = FlashPosition;
 	Direction = FlashDirection;
+}
+
+void SpotLight::ToggleSpotlight(bool NewSetting)
+{
+	bEnableFlashlight = NewSetting;
 }
 
 SpotLight::~SpotLight()

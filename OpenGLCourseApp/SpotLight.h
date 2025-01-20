@@ -24,11 +24,14 @@ public:
 
 	void SetFlash(glm::vec3 FlashPosition, glm::vec3 FlashDirection);
 
+	void ToggleSpotlight(bool NewSetting);
+
 	~SpotLight();
 
 private:
 	glm::vec3 Direction;
 	GLfloat Edge;
 	GLfloat ProcessedEdge;
+	bool bEnableFlashlight;
 };
 

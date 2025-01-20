@@ -84,7 +84,6 @@ static const char* OmniGeometryShader = "Shaders/omni_shadow_map.geom";
 int ViewportWidth = 1366;
 int ViewportHeight = 768;
 
-// Toggles Flashlight Spotlight on & off
 bool bEnableFlashlight = false;
 
 // Vertex Shader
@@ -425,6 +424,11 @@ void RenderPass(glm::mat4 ProjectionMatrix, glm::mat4 ViewMatrix)
         glm::vec3 FlashlightOffset = MyCamera.GetCameraPosition();
         FlashlightOffset.y -= 0.1f;
         SpotLights[1].SetFlash(FlashlightOffset, MyCamera.GetCameraDirection());
+        SpotLights[1].ToggleSpotlight(bEnableFlashlight);
+    }
+    else
+    {
+        SpotLights[1].ToggleSpotlight(bEnableFlashlight);
     }
 
     
@@ -550,6 +554,13 @@ int main()
         // Pass key inputs from Window to the Camera
         MyCamera.KeyControl(MainWindow.GetKeys(), DeltaTime);
         MyCamera.MouseControl(MainWindow.GetChangeX(), MainWindow.GetChangeY());
+
+        // Toggles Flashlight Spotlight on & off
+        if (MainWindow.GetKeys()[GLFW_KEY_F])
+        {
+            bEnableFlashlight = !bEnableFlashlight;
+            MainWindow.GetKeys()[GLFW_KEY_F] = false;
+        }
 
         // Render Passes
         // Directional Shadow Pass
