@@ -46,6 +46,7 @@ SpotLight SpotLights[MAX_SPOT_LIGHTS];
 Texture BrickTexture;
 Texture DirtTexture;
 Texture PlainTexture;
+Texture SoilTexture;
 
 Material ShinyMaterial;
 Material DullMaterial;
@@ -225,7 +226,7 @@ void CreateShaders()
 
 void RenderScene()
 {
-    //----------------[Start Mesh 0]--------------------------------
+    //----------------[Start Pyramid 1]--------------------------------
     // Defines a 4x4 matrix for the Model Matrix (1.0f) initializes as a Identity Matrix
     glm::mat4 Model(1.0f);
 
@@ -244,9 +245,9 @@ void RenderScene()
 
     // Render mesh 0
     Meshes[0]->RenderMesh();
-    //----------------[End Mesh 0]--------------------------------
+    //----------------[End Pyramid 1]--------------------------------
 
-    //----------------[Start Mesh 1]--------------------------------
+    //----------------[Start Pyramid 2]--------------------------------
     // Refresh & create new Model info for 2nd Mesh, View & Projection is re-used
     Model = glm::mat4(1.0f);
     Model = glm::translate(Model, glm::vec3(2.0f, 0.0f, -2.5f));
@@ -260,16 +261,16 @@ void RenderScene()
 
     // Render mesh
     Meshes[1]->RenderMesh();
-    //----------------[End Mesh 1]--------------------------------
+    //----------------[End Pyramid 2]--------------------------------
 
-    //----------------[Start Mesh 2]--------------------------------
+    //----------------[Start Ground]--------------------------------
     // Refresh & create new Model info for floor Mesh, View & Projection is re-used
     Model = glm::mat4(1.0f);
     Model = glm::translate(Model, glm::vec3(0.0f, -1.0f, 0.0f));
     glUniformMatrix4fv(UniformModel, 1, GL_FALSE, glm::value_ptr(Model));
 
     // Use Dirt Texture
-    PlainTexture.UseTexture();
+    SoilTexture.UseTexture();
 
     // Use dull Material
     DullMaterial.UseMaterial(UniformSpecularIntensity, UniformShininess);
@@ -277,8 +278,7 @@ void RenderScene()
     // Render mesh
     Meshes[2]->RenderMesh();
 
-    //----------------[End Mesh 2]--------------------------------
-
+    //----------------[End Ground]--------------------------------
 
     //----------------[Start X-Wing]--------------------------------
     // Refresh & create new Model info for floor Mesh, View & Projection is re-used
@@ -454,6 +454,8 @@ int main()
     DirtTexture.LoadAlphaTexture();
     PlainTexture = Texture("Textures/plain.png");
     PlainTexture.LoadAlphaTexture();
+    SoilTexture = Texture("Textures/soil.jpg");
+    SoilTexture.LoadTexture();
 
     ShinyMaterial = Material(1.0f, 16);
     DullMaterial = Material(0.3f, 4);
