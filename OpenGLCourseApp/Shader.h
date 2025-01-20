@@ -22,6 +22,7 @@ public:
 
 	void CreateFromString(const char* VertexCode, const char* FragmentCode);
 	void CreateFromFiles(const char* VertexPath, const char* FragmentPath);
+	void CreateFromFiles(const char* VertexPath, const char* FragmentPath, const char* GeometrytPath);
 	std::string ReadFile(const char* FilePath);
 	GLuint GetProjectionLocation();
 	GLuint GetViewLocation();
@@ -33,6 +34,9 @@ public:
 	GLuint GetDiffuseIntensityLocation();
 	GLuint GetSpecularIntensityLocation();
 	GLuint GetShininessLocation();
+	GLuint GetOmniLightPositionLocation();
+	GLuint GetFarPlaneLocation();
+
 	void UseShader();
 	void ClearShader();
 	void SetDirectionalLight(DirectionalLight* MyDirectionalLight);
@@ -41,6 +45,7 @@ public:
 	void SetTexture(GLuint TextureUnit);
 	void SetDirectionalShadowMap(GLuint TextureUnit);
 	void SetDirectionalLightTransform(glm::mat4* LightTransform);
+	void SetOmniLightMatrices(std::vector<glm::mat4> InLightMatrices);
 
 	~Shader();
 
@@ -107,8 +112,13 @@ private:
 	// Shadow Map Values
 	GLuint UniformDirectionalLightTransform;
 	GLuint UniformDirectionalShadowMap;
+	GLuint UniformOmniLightPosition;
+	GLuint UniformFarPlane;
+	GLuint UniformLightMatrices[6];
 
 	void CompileShader(const char* VertexCode, const char* FragmentCode);
+	void CompileShader(const char* VertexCode, const char* FragmentCode, const char* GeometryCode);
 	void AddShader(GLuint TheProgram, const char* ShaderCode, GLenum ShaderType);
+	void CompileProgram();
 };
 

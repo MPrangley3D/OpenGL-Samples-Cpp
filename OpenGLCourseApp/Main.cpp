@@ -35,6 +35,8 @@ GLWindow MainWindow;
 std::vector<Mesh*> Meshes;
 std::vector<Shader> Shaders;
 Shader DirectionalShadowShader;
+Shader OmniShadowShader;
+
 Camera MyCamera;
 
 DirectionalLight MainLight;
@@ -67,9 +69,17 @@ GLuint UniformModel = 0;
 GLuint UniformEyePosition = 0;
 GLuint UniformSpecularIntensity = 0;
 GLuint UniformShininess = 0;
+GLuint UniformOmniLightPosition = 0;
+GLuint UniformFarPlane = 0;
 
+// Shader code file paths
 static const char* VertexShader = "Shaders/shader.vert";
 static const char* FragmentShader = "Shaders/shader.frag";
+static const char* DirectionalVertexShader = "Shaders/directional_shadow_map.vert";
+static const char* DirectionalFragmentShader = "Shaders/directional_shadow_map.frag";
+static const char* OmniVertexShader = "Shaders/omni_shadow_map.vert";
+static const char* OmniFragmentShader = "Shaders/omni_shadow_map.frag";
+static const char* OmniGeometryShader = "Shaders/omni_shadow_map.geom";
 
 int ViewportWidth = 1366;
 int ViewportHeight = 768;
@@ -197,12 +207,18 @@ void CreateObjects()
 
 void CreateShaders()
 {
+    // Base Shader for Phong shading
     Shader* Shader1 = new Shader();
     Shader1->CreateFromFiles(VertexShader, FragmentShader);
     Shaders.push_back(*Shader1);
 
+    // Shader for the Directional Shadow Map
     DirectionalShadowShader = Shader();
-    DirectionalShadowShader.CreateFromFiles("Shaders/directional_shadow_map.vert", "Shaders/directional_shadow_map.frag");
+    DirectionalShadowShader.CreateFromFiles(DirectionalVertexShader, DirectionalFragmentShader);
+
+    // Shader for the Omnidirectional Shadows CubeMap
+    OmniShadowShader = Shader();
+    OmniShadowShader.CreateFromFiles(OmniVertexShader, OmniFragmentShader, OmniGeometryShader);
 }
 
 void RenderScene()
@@ -324,6 +340,32 @@ void DirectionalShadowMapPass(DirectionalLight* Light)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void OmniShadowMapPass(PointLight* Light)
+{
+    OmniShadowShader.UseShader();
+
+    // Sets the viewport to the same dimensions as the framebuffer
+    glViewport(0, 0, Light->GetShadowMap()->GetShadowWidth(), Light->GetShadowMap()->GetShadowHeight());
+
+    // Enable depth buffer writing to shadow map
+    Light->GetShadowMap()->Write();
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    // Set up uniforms for shader
+    UniformModel = OmniShadowShader.GetModelLocation();
+    UniformOmniLightPosition = OmniShadowShader.GetOmniLightPositionLocation();
+    UniformFarPlane = OmniShadowShader.GetFarPlaneLocation();
+    glUniform3f(UniformOmniLightPosition, Light->GetPosition().x, Light->GetPosition().y, Light->GetPosition().z);
+    glUniform1f(UniformFarPlane, Light->GetFarPlane());
+    OmniShadowShader.SetOmniLightMatrices(Light->CalculateLightTransforms());
+
+    // Render the depth pass
+    RenderScene();
+
+    // Unbinds frame buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void RenderPass(glm::mat4 ProjectionMatrix, glm::mat4 ViewMatrix)
 {
     // Assign the Shader Program
@@ -409,50 +451,65 @@ int main()
                                  0.1f, 0.6f,
                                  50.0f,-60.0f, -20.0f);
 
-    
-
-    // Params 1-3: Ambient RGB (Line 1)
-    // Param 4: Ambient Intensity (Line 2)
-    // Param 5: Diffuse Intensity (Line 2)
-    // Params 6-8: Position (Line 3)
-    // Params 9-11: Constant, Linear, Exponent (Line 4)
-    PointLights[0] = PointLight(0.0f, 1.0f, 0.0f,
+    // Params 1-2: Shadow Width, Shadow Height (Line 1)
+    // Params 3-4: NearClip, FarClip (Line 2)
+    // Params 5-7: Ambient RGB (Line 3)
+    // Param 8: Ambient Intensity (Line 4)
+    // Param 9: Diffuse Intensity (Line 4)
+    // Params 10-13: Position (Line 5)
+    // Params 14-17: Direction (Line 6)
+    // Params 12-15: Constant, Linear, Exponent (Line 7)
+    PointLights[0] = PointLight(1024, 1024,
+                                0.1f, 100.0f,
+                                0.0f, 1.0f, 0.0f,
                                 0.1f, 0.2f,
                                 -5.0f,0.0f, 0.0f,
                                 0.5f, 0.2f, 0.1f);
     
-    PointLights[1] = PointLight(1.0f, 0.0f, 0.0f,
+    PointLights[1] = PointLight(1024, 1024,
+                                0.1f, 100.0f, 
+                                1.0f, 0.0f, 0.0f,
                                 0.1f, 0.2f,
                                 5.0f, 0.0f, 0.0f,
                                 0.5f, 0.2f, 0.1f);
 
-    PointLights[2] = PointLight(0.0f, 0.0f, 1.0f,
+    PointLights[2] = PointLight(1024, 1024,
+                                0.1f, 100.0f, 
+                                0.0f, 0.0f, 1.0f,
                                 0.1f, 0.2f,
                                 0.0f, 0.0f, -6.0f,
                                 0.5f, 0.2f, 0.1f);
 
-    // Params 1-3: Ambient RGB (Line 1)
-    // Param 4: Ambient Intensity (Line 2)
-    // Param 5: Diffuse Intensity (Line 2)
-    // Params 6-8: Position (Line 3)
-    // Params 9-11: Direction (Line 4)
-    // Params 12-15: Constant, Linear, Exponent (Line 5)
-    // Param 16:  Edge (Line 6)
-    SpotLights[0] = SpotLight(0.0f, 1.0f, 1.0f,
+    // Params 1-2: Shadow Width, Shadow Height (Line 1)
+    // Params 3-4: NearClip, FarClip (Line 2)
+    // Params 5-7: Ambient RGB (Line 3)
+    // Param 8: Ambient Intensity (Line 4)
+    // Param 9: Diffuse Intensity (Line 4)
+    // Params 10-13: Position (Line 5)
+    // Params 14-17: Direction (Line 6)
+    // Params 12-15: Constant, Linear, Exponent (Line 7)
+    // Param 16:  Edge (Line 8)
+    SpotLights[0] = SpotLight(1024, 1024,
+                                0.1f, 100.0f, 
+                                0.0f, 1.0f, 1.0f,
                                 0.0f,  0.5f,
                                 0.0f,  0.0f,  0.0f,
                                 0.0f, -1.0f, -0.5f,
                                 0.3f,  0.2f,  0.1f,
                                 55.0f);
 
-    SpotLights[1] = SpotLight(1.0f, 1.0f, 1.0f,
+    SpotLights[1] = SpotLight(1024, 1024,
+                                0.1f, 100.0f, 
+                                1.0f, 1.0f, 1.0f,
                                 0.0f, 1.0f,
                                 5.0f, 0.0f, 0.0f,
                                 0.0f, 0.0f, 0.0f,
                                 1.0f, 0.0f, 0.0f,
                                 20.0f);
 
-    SpotLights[2] = SpotLight(1.0f, 0.0f, 1.0f,
+    SpotLights[2] = SpotLight(1024, 1024,
+                                0.1f, 100.0f, 
+                                1.0f, 0.0f, 1.0f,
                                 0.0f, 1.5f,
                                 0.0f, 0.0f, 0.0f,
                                 10.0f, -1.0f, -10.0f,
@@ -460,7 +517,7 @@ int main()
                                 15.0f);
 
     // We only need to set up Projection once, so we do it here rather than in the While loop
-    glm::mat4 Projection = glm::perspective(45.0f, MainWindow.GetBufferWidth() / MainWindow.GetBufferHeight(), 0.1f, 100.0f);
+    glm::mat4 Projection = glm::perspective(glm::radians(60.0f), MainWindow.GetBufferWidth() / MainWindow.GetBufferHeight(), 0.1f, 100.0f);
 
     // Loop until window closed
     while (!MainWindow.GetShouldCloseWindow())
@@ -478,7 +535,19 @@ int main()
         MyCamera.MouseControl(MainWindow.GetChangeX(), MainWindow.GetChangeY());
 
         // Render Passes
+        // Directional Shadow Pass
         DirectionalShadowMapPass(&MainLight);
+        // Omnidirectional Cube Map Pass - Point Lights
+        for (size_t i = 0; i < PointLightCount; i++)
+        {
+            OmniShadowMapPass(&PointLights[i]);
+        }
+        // Omnidirectional Cube Map Pass - Spot Lights
+        for (size_t i = 0; i < SpotLightCount; i++)
+        {
+            OmniShadowMapPass(&SpotLights[i]);
+        }
+        // Phone Shader Render Pass
         RenderPass(Projection, MyCamera.CalculateViewMatrix());
         
         // Clear the Shader Program
