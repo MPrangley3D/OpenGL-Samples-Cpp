@@ -243,7 +243,7 @@ void RenderScene()
     BrickTexture.UseTexture();
 
     // Use shiny Material
-    ShinyMaterial.UseMaterial(UniformSpecularIntensity, UniformShininess);
+    DullMaterial.UseMaterial(UniformSpecularIntensity, UniformShininess);
 
     // Render mesh 0
     Meshes[0]->RenderMesh();
@@ -275,7 +275,7 @@ void RenderScene()
     SoilTexture.UseTexture();
 
     // Use dull Material
-    DullMaterial.UseMaterial(UniformSpecularIntensity, UniformShininess);
+    ShinyMaterial.UseMaterial(UniformSpecularIntensity, UniformShininess);
 
     // Render mesh
     Meshes[2]->RenderMesh();
@@ -474,10 +474,10 @@ int main()
     // Param 4: Ambient Intensity (Line 2)
     // Param 5: Diffuse Intensity (Line 2)
     // Params 6-8: Direction (Line 3)
-    MainLight = DirectionalLight(4096, 4096,
-                                 1.0f,  1.0f,  1.0f, 
-                                 0.025f, 0.025f,
-                                 50.0f,-60.0f, -20.0f);
+    MainLight = DirectionalLight(2048, 2048,
+                                 1.0f,  0.55f,  0.3f, 
+                                 0.01f, 0.9f,
+                                -10.0f,-12.0f, 18.5f);
 
     // Params 1-2: Shadow Width, Shadow Height (Line 1)
     // Params 3-4: NearClip, FarClip (Line 2)
@@ -490,21 +490,21 @@ int main()
     PointLights[0] = PointLight(1024, 1024,
                                 0.1f, 100.0f,
                                 0.0f, 1.0f, 0.0f,
-                                0.5f, 1.0f,
+                                0.0f, 0.0f,
                                -5.0f, 3.0f, 0.0f,
                                 0.5f, 0.2f, 0.1f);
     
     PointLights[1] = PointLight(1024, 1024,
-                                0.1f, 100.0f, 
-                                1.0f, 0.0f, 0.0f,
-                                0.5f, 1.0f,
-                                5.0f, 3.0f, 0.0f,
-                                0.5f, 0.2f, 0.1f);
+                                0.01f, 100.0f, 
+                                0.0f, 0.0f, 0.0f,
+                                0.0f, 0.0f,
+                                1.0f, 2.0f, 0.0f,
+                                0.3f, 0.1f, 0.1f);
 
     PointLights[2] = PointLight(1024, 1024,
                                 0.1f, 100.0f, 
                                 0.0f, 0.0f, 1.0f,
-                                0.5f, 1.0f,
+                                0.0f, 0.0f,
                                 0.0f, 3.0f, -6.0f,
                                 0.5f, 0.2f, 0.1f);
 
@@ -520,12 +520,12 @@ int main()
     SpotLights[0] = SpotLight(1024, 1024,
                                 0.1f, 100.0f, 
                                 0.0f, 1.0f, 1.0f,
-                                0.0f,  0.5f,
+                                0.0f,  0.0f,
                                 0.0f,  0.0f,  0.0f,
                                 0.0f, -1.0f, -0.5f,
                                 0.3f,  0.2f,  0.1f,
                                 55.0f);
-
+    // The flashlight Spotlight
     SpotLights[1] = SpotLight(1024, 1024,
                                 0.1f, 100.0f, 
                                 1.0f, 1.0f, 1.0f,
@@ -538,7 +538,7 @@ int main()
     SpotLights[2] = SpotLight(1024, 1024,
                                 0.1f, 100.0f, 
                                 1.0f, 0.0f, 1.0f,
-                                0.0f, 1.5f,
+                                0.0f, 0.0f,
                                 0.0f, 0.0f, 0.0f,
                                 10.0f, -1.0f, -10.0f,
                                 0.3f, 0.2f, 0.1f,

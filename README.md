@@ -3,6 +3,26 @@
 
 This is a repo to store my C++ OpenGL work as I explore the OpenGL Libraries GLEW and GLFW.
 
+# "Toy" Phone OpenGL + C++ Renderer
+
+This simple render engine supports the following features:
+
+* Mesh importing
+* Texture Loading
+* Model, View, and Projection matrix transformations
+* Skyboxes
+* Interpolation & Indexed Draws
+* Camera movement with WASD
+* Flashlight toggling with 'F'
+* RGB Point Lights w/ Attenuation
+* RGB Spotlights w/ Attenuation
+* RBG Directional Lighting
+* Directional Shadowmapping w/ PCF Filtering
+* Omnidirectional Shadowmapping (Point & Spotlights) w/ PCF Filtering
+* Vertex, Fragment, and Geometry shaders utilized
+
+<img src="Images\Final.gif">
+
 # Point Lights:
 <img src="Images\PointLights.png">
 
