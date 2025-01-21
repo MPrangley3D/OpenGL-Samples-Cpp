@@ -24,7 +24,7 @@
 #include "PointLight.h"
 #include "SpotLight.h"
 #include "Material.h"
-
+#include "Skybox.h"
 #include "Model.h"
 
 #include "assimp/Importer.hpp"
@@ -50,6 +50,8 @@ Texture SoilTexture;
 
 Material ShinyMaterial;
 Material DullMaterial;
+
+Skybox MySkybox;
 
 Model XWing;
 Model Chopper;
@@ -376,6 +378,19 @@ void OmniShadowMapPass(PointLight* Light)
 
 void RenderPass(glm::mat4 ProjectionMatrix, glm::mat4 ViewMatrix)
 {
+    // Verify viewport settings (In case they were changed by depth buffer/etc
+    glViewport(0, 0, ViewportWidth, ViewportHeight);
+
+    // Clear window
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // Clear the color & depth buffer bits
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Draw Skybox
+    printf("Drawing Skybox...\n");
+    MySkybox.DrawSkybox(ViewMatrix, ProjectionMatrix);
+
     // Assign the Shader Program
     Shaders[0].UseShader();
 
@@ -386,15 +401,6 @@ void RenderPass(glm::mat4 ProjectionMatrix, glm::mat4 ViewMatrix)
     UniformEyePosition = Shaders[0].GetEyePositionLocation();
     UniformSpecularIntensity = Shaders[0].GetSpecularIntensityLocation();
     UniformShininess = Shaders[0].GetShininessLocation();
-
-    // Verify viewport settings (In case they were changed by depth buffer/etc
-    glViewport(0, 0, ViewportWidth, ViewportHeight);
-
-    // Clear window
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-    // Clear the color & depth buffer bits
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Sets up light in shaders
     Shaders[0].SetDirectionalLight(&MainLight);
@@ -407,7 +413,6 @@ void RenderPass(glm::mat4 ProjectionMatrix, glm::mat4 ViewMatrix)
     // Set GL_TEXTURE1 as Texture and GL_TEXTURE2 as the Shadow Map (0 reserved for defaults)
     Shaders[0].SetTexture(1);
     Shaders[0].SetDirectionalShadowMap(2);
-
 
     // Bind the Uniform Perspective / Projection Matrix
     glUniformMatrix4fv(UniformProjection, 1, GL_FALSE, glm::value_ptr(ProjectionMatrix));
@@ -538,6 +543,29 @@ int main()
                                 10.0f, -1.0f, -10.0f,
                                 0.3f, 0.2f, 0.1f,
                                 15.0f);
+
+    // Setup Skybox Faces
+    std::vector<std::string> SkyboxFaces;
+ 
+    // Face: Positive X (Right)
+    SkyboxFaces.push_back("Textures/Skybox/cupertin-lake_rt.tga");
+    // Face: Negative X (Left)
+    SkyboxFaces.push_back("Textures/Skybox/cupertin-lake_lf.tga");
+
+    // Face: Positive Y (Up)
+    SkyboxFaces.push_back("Textures/Skybox/cupertin-lake_up.tga");
+    // Face: Negative Y (Down)
+    SkyboxFaces.push_back("Textures/Skybox/cupertin-lake_dn.tga");
+
+    // Face: Positive Z (Back)
+    SkyboxFaces.push_back("Textures/Skybox/cupertin-lake_bk.tga");
+    // Face: Negative Z (Front)
+    SkyboxFaces.push_back("Textures/Skybox/cupertin-lake_ft.tga");
+
+    // Construct Skybox
+    MySkybox = Skybox(SkyboxFaces);
+
+
 
     // We only need to set up Projection once, so we do it here rather than in the While loop
     glm::mat4 Projection = glm::perspective(glm::radians(60.0f), MainWindow.GetBufferWidth() / MainWindow.GetBufferHeight(), 0.1f, 100.0f);

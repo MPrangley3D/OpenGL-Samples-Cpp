@@ -143,6 +143,7 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="GLWindow.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
+    <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="SpotLight.cpp" />
     <ClCompile Include="Texture.cpp" />
   </ItemGroup>
@@ -159,6 +160,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="GLWindow.h" />
     <ClInclude Include="ShadowMap.h" />
+    <ClInclude Include="Skybox.h" />
     <ClInclude Include="SpotLight.h" />
     <ClInclude Include="Texture.h" />
   </ItemGroup>
