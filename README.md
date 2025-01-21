@@ -3,10 +3,11 @@
 
 This is a repo to store my C++ OpenGL work as I explore the OpenGL Libraries GLEW and GLFW.
 
-# "Toy" Phone OpenGL + C++ Renderer
+# "Toy" Phong OpenGL + C++ Renderer
 
 This simple render engine supports the following features:
 
+* Simple Phong lighting model
 * Mesh importing
 * Texture Loading
 * Model, View, and Projection matrix transformations
