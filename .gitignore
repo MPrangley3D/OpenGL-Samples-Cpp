@@ -39,5 +39,6 @@ OpenGLCourseApp/OpenGLCourseApp.vcxproj.user
 # whitelist everything in ./ExternalLibs
 !ExternalLibs/**
 
-# whitelist glew.dll
+# whitelist dlls
 !OpenGLCourseApp/glew32.dll
+!assimp-vc143-mt.dll
