@@ -3,7 +3,7 @@
 
 This is a repo to store my C++ OpenGL work as I explore the OpenGL Libraries GLEW and GLFW.
 
-# "Toy" Phong OpenGL + C++ Renderer
+# "Toy" Phong OpenGL & C++ Renderer
 
 This simple render engine supports the following features:
 
